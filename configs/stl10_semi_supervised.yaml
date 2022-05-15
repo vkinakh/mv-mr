@@ -1,0 +1,20 @@
+batch_size: 128
+epochs: 200
+eval_every: 1
+n_workers: 16
+fp16: True
+accumulate_grad_batches: 1
+
+fine_tune_from:
+
+wd: 1e-6
+lr: 1e-4
+
+dataset:
+  name: stl10
+  size: 96
+  n_classes: 10
+  percentage: 1
+  path:
+
+comment: stl10_semi_supervised

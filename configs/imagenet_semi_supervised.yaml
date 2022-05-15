@@ -1,0 +1,20 @@
+batch_size: 128              # batch size for training
+epochs: 100                  # number of epochs to train for
+eval_every: 1                # frequency of evaluating on val set (epochs)
+n_workers: 16                # number of workers for dataloader
+fp16: True                   # whether to use fp16 precision
+accumulate_grad_batches: 1   # number of accumulation steps
+
+fine_tune_from:              # path to pre-trained model to fine-tune from
+
+wd: 1e-6                     # weight decay
+lr: 1e-4                     # learning rate
+
+dataset:                     # dataset to use
+  name: imagenet             # dataset name
+  n_classes: 1000            # dataset name
+  size: 224                  # image size
+  path: <>                   # path to the ImageNet folder. It should contain folders 'train' and 'val'
+  percentage: 1              # percentage of dataset to use for training
+
+comment: imagenet_semi_supervised_0.01
