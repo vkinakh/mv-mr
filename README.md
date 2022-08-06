@@ -103,7 +103,7 @@ Semi-supervised model evaluation simply loads model and processes validation set
 To run semi-supervised model evaluation:
 
 ```commandline
-python evaluate_semi_supervised.py --config_self <path to self-supervised config> --config_semi <path to semi-supervised config> --path_model <path to train semi-supervised model>
+python evaluate_semi_supervised.py --config <path to semi-supervised config> --ckpt <path to train semi-supervised model>
 ```
 
 ### Evaluate multiclass classification on VOC07
@@ -111,7 +111,7 @@ python evaluate_semi_supervised.py --config_self <path to self-supervised config
 To run multiclass classification evaluation on VOC07:
 
 ```commandline
-python evaluate_voc.py --config_self <path to self-supervised config> --config_voc <path to VOC config> --path_voc <path to model trained on VOC>
+python evaluate_voc.py --config <path to VOC config> --ckpt <path to model trained on VOC>
 ```
 
 ## Results
