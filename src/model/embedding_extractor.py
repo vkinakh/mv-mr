@@ -1,6 +1,7 @@
 from typing import Tuple
 
 import numpy as np
+from tqdm import tqdm
 
 import torch
 import torch.nn as nn
@@ -83,7 +84,7 @@ class EmbeddingExtractor:
         features = []
         lbls = []
 
-        for batch_x, batch_y in loader:
+        for batch_x, batch_y in tqdm(loader, 'Computing embeddings'):
             batch_x = batch_x.to(self._device)
             lbls.extend(batch_y)
 

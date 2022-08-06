@@ -1,6 +1,8 @@
 from typing import Dict
 import argparse
 
+from tqdm import tqdm
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -53,9 +55,11 @@ def linear_evaluation(encoder: nn.Module, config: Dict, emb_type: str = 'h',  ep
 
 def evaluate(args):
     config = get_config(args.config)
-    model = SelfSupervisedModule.load_from_checkpoint(args.ckpt, config=config)
+    model = SelfSupervisedModule(config=config)
 
+    ckpt = torch.load(args.ckpt, map_location=get_device())
     encoder = model.encoder.eval()
+    encoder.load_state_dict(ckpt['encoder'])
 
     for emb_type in ['h']:  #, 'z', 'concat']:
         print(f'Evaluating {emb_type}')
@@ -66,10 +70,14 @@ def evaluate(args):
 def evaluate_finetuner(args):
     config = get_config(args.config)
     device = get_device()
-    model = SelfSupervisedModule.load_from_checkpoint(args.ckpt, config=config)
+    model = SelfSupervisedModule(config=config)
+
+    ckpt = torch.load(args.ckpt, map_location=device)
 
     encoder = model.encoder.eval().to(device)
+    encoder.load_state_dict(ckpt['encoder'])
     finetuner = model.online_finetuner.eval().to(device)
+    finetuner.load_state_dict(ckpt['online_finetuner'])
 
     batch_size = config['batch_size']
     size = config['dataset']['size']
@@ -90,7 +98,7 @@ def evaluate_finetuner(args):
     acc = torchmetrics.Accuracy().to(device)
     acc_top5 = torchmetrics.Accuracy(top_k=5).to(device)
 
-    for batch_x, batch_y in test_loader:
+    for batch_x, batch_y in tqdm(test_loader, desc='Evaluating'):
         batch_x, batch_y = batch_x.to(device), batch_y.to(device)
 
         with torch.no_grad():
