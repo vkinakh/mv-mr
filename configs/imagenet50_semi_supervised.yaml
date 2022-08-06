@@ -17,5 +17,7 @@ dataset:                       # dataset to use
   path: <>                     # path to the ImageNet folder. It should contain folders 'train' and 'val'
   percentage: 10               # percentage of dataset to use for training
 
+encoder:                       # encoder parameters
+  out_dim: 8192-8192-8192      # number of neurons in the projection layer
 
 comment: imagenet50_semi_supervised_0.1

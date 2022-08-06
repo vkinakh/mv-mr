@@ -7,9 +7,16 @@ accumulate_grad_batches: 1   # number of accumulation steps
 
 num_classes: 20              # number of classes in VOC07 dataset. Don't change this
 
+dataset:
+  name: voc
+  n_classes: 20              # number of classes in VOC07 dataset. Don't change this
+
 fine_tune_from:              # path to pre-trained model to fine-tune from
 
 wd: 1e-6                     # weight decay
 lr: 1e-4                     # learning rate
+
+encoder:                     # encoder parameters
+  out_dim: 8192-8192-8192    # number of neurons in the projection layer
 
 comment: imagenet_voc
