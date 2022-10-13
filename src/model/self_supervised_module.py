@@ -15,7 +15,7 @@ from kymatio.torch import Scattering2D
 from einops import rearrange
 import torch_dct as dct
 
-from src.model import ResnetMultiProj, HOGLayer
+from src.model import ResnetMultiProj, DeiTMultiProj, HOGLayer
 from src.loss import DistanceCorrelation
 from src.data import DatasetSSL
 from src.transform import AugTransform, ValTransform
@@ -35,14 +35,20 @@ class SelfSupervisedModule(pl.LightningModule):
 
         self._config = config
         params_enc = config['encoder']
-        self._encoder = ResnetMultiProj(**params_enc)
+
+        if config['encoder_type'] == 'resnet':
+            self._encoder = ResnetMultiProj(**params_enc)
+        elif config['encoder_type'] == 'deit':
+            self._encoder = DeiTMultiProj(**params_enc)
+        else:
+            raise NotImplementedError(f"Encoder type {config['encoder_type']} not implemented")
         self._loss_dc = self.get_loss()
         self._margin_std = self.config['std_margin']
         self._scatnet, self._hog, self._transform = self.get_feature_extraction()
         self._identity = nn.Identity()
         self.hparams.batch_size = config['batch_size']  # set start batch_size
         self.hparams.lr = eval(config['lr'])
-        self.online_finetuner = nn.Linear(2048, config['dataset']['n_classes'])
+        self.online_finetuner = nn.Linear(self._encoder.num_features, config['dataset']['n_classes'])
 
     @property
     def encoder(self):

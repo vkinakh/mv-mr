@@ -3,3 +3,6 @@ from .utils import get_device, get_config, std_filter_torch, split_into_patches
 from .utils import infinite_loader
 from .tsne import run_tsne
 from .on_checkoint_hparams import OnCheckpointHparams
+from .model_utils import trunc_normal_
+from .model_utils import count_trainable_parameters
+

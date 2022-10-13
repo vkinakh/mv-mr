@@ -1,4 +1,5 @@
 from .resnet import ResnetMultiProj
+from .deit import DeiTMultiProj
 from .embedding_extractor import EmbeddingExtractor
 from .linear_evaluator import LinearEvaluator
 from .hog import HOGLayer
