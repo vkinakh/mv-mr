@@ -29,21 +29,35 @@ class AugTransform:
 
     """Applies augmentation to the image"""
 
-    def __init__(self, dataset: str, size: int):
+    def __init__(self, dataset: str, size: int, policy: str = 'custom'):
 
         stats = DATASET_STATS[dataset]
-        blur_kernel_size = 2 * int(.05 * size) + 1
-        color = transforms.ColorJitter(0.8, 0.8, 0.8, 0.2)
 
-        self._augmentations = transforms.Compose([
-            transforms.RandomResizedCrop(size=size),
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomApply([color], p=0.8),
-            transforms.RandomGrayscale(p=0.2),
-            transforms.GaussianBlur(kernel_size=blur_kernel_size),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=stats['mean'], std=stats['std'])
-        ])
+        if policy == 'custom':
+            blur_kernel_size = 2 * int(.05 * size) + 1
+            color = transforms.ColorJitter(0.8, 0.8, 0.8, 0.2)
+
+            trans = [
+                transforms.RandomResizedCrop(size=size),
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomApply([color], p=0.8),
+                transforms.RandomGrayscale(p=0.2),
+                transforms.GaussianBlur(kernel_size=blur_kernel_size)
+            ]
+        elif policy == 'randaugment':
+            trans = [
+                transforms.RandomResizedCrop(size=size),
+                transforms.RandAugment(num_ops=4, magnitude=10),
+            ]
+        elif policy == 'autoaugment':
+            trans = [
+                transforms.RandomResizedCrop(size=size),
+                transforms.AutoAugment()
+            ]
+        else:
+            raise ValueError('Incorrect policy type')
+        trans.extend([transforms.ToTensor(), transforms.Normalize(mean=stats['mean'], std=stats['std'])])
+        self._augmentations = transforms.Compose(trans)
 
     def __call__(self, im) -> torch.Tensor:
         return self._augmentations(im)

@@ -100,8 +100,9 @@ class SelfSupervisedModule(pl.LightningModule):
         name = self.config['dataset']['name']
         size = self.config['dataset']['size']
         path = self.config['dataset']['path']
+        aug_policy = self.config['dataset']['aug_policy']
 
-        trans = AugTransform(name, size)
+        trans = AugTransform(name, size, policy=aug_policy)
         trans_orig = ValTransform(name, size)
 
         ds = DatasetSSL(dataset_name=name, trans=trans, trans_orig=trans_orig,
