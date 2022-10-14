@@ -121,7 +121,12 @@ class SelfSupervisedModule(pl.LightningModule):
         lr = self.hparams.lr
         wd = eval(self.config['wd'])
 
-        opt = optim.Adam(self._encoder.parameters(), lr=lr, weight_decay=wd)
+        opt_type = self.config['optimizer']
+
+        if opt_type == 'adam':
+            opt = optim.Adam(self._encoder.parameters(), lr=lr, weight_decay=wd)
+        elif opt_type == 'adamw':
+            opt = optim.AdamW(self._encoder.parameters(), lr=lr, weight_decay=wd)
         sched = optim.lr_scheduler.CosineAnnealingLR(opt, T_max=len(self.train_dataloader()))
         return [opt], [sched]
 
