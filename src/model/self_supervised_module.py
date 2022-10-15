@@ -54,6 +54,10 @@ class SelfSupervisedModule(pl.LightningModule):
     def encoder(self):
         return self._encoder
 
+    @property
+    def num_features(self) -> int:
+        return self._encoder.num_features
+
     def get_feature_extraction(self):
         # feature extraction methods
         params_scat = self.config['scatnet']
@@ -86,9 +90,10 @@ class SelfSupervisedModule(pl.LightningModule):
         name = self.config['dataset']['name']
         size = self.config['dataset']['size']
         path = self.config['dataset']['path']
+        aug_policy = self.config['dataset']['aug_policy']
         n_aug = 1 if 'n_aug' not in self.config['dataset'] else self.config['dataset']['n_aug']
 
-        trans = AugTransform(name, size)
+        trans = AugTransform(name, size, policy=aug_policy)
         trans_orig = ValTransform(name, size)
 
         ds = DatasetSSL(dataset_name=name, trans=trans, trans_orig=trans_orig,
