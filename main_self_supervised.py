@@ -34,7 +34,7 @@ def main(args) -> None:
                                          mode='max')
     callback_last_ckpt = ModelCheckpoint(every_n_epochs=1, filename='last_{epoch}_{step}')
 
-    encoder_dim = 2048
+    encoder_dim = module.num_features
     n_classes = config['dataset']['n_classes']
     callback_finetuner = OnlineFineTuner(encoder_dim, n_classes)
 
