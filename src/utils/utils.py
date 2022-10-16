@@ -1,5 +1,9 @@
 from typing import Tuple
 import yaml
+import random
+import os
+
+import numpy as np
 
 import torch
 from torch.utils.data import DataLoader
@@ -80,3 +84,19 @@ def infinite_loader(data_loader: DataLoader):
     while True:
         for batch in data_loader:
             yield batch
+
+
+def seed_everything(seed: int) -> None:
+    """Sets seed for all random generators
+
+    Args:
+        seed: seed to set
+    """
+
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+    print(f'Setting all seeds to be {seed} to reproduce...')
