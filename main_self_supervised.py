@@ -53,7 +53,8 @@ def main(args) -> None:
                          check_val_every_n_epoch=eval_every,
                          strategy='ddp',
                          precision=precision,
-                         accumulate_grad_batches=accumulate_grad_batches)
+                         accumulate_grad_batches=accumulate_grad_batches,
+                         gradient_clip_val=config['gradient_clip_val'])
 
     if auto_lr:
         lr_finder = trainer.tuner.lr_find(module, min_lr=1e-5, max_lr=1e-1,)

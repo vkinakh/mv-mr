@@ -486,20 +486,17 @@ class DeiTMultiProj(nn.Module):
     TYPES = {
         'tiny': deit_tiny,
         'small': deit_small,
-        'small_p8': deit_small_p8,
         'vitc_4gf': vitc_4gf,
         'small_convstem': deit_small_convstem,
-        'base_p8': deit_base_p8,
-        'base_p4': deit_base_p4,
         'base': deit_base,
     }
 
-    def __init__(self, model_type: str, out_dim: Union[str, int], img_size: int):
+    def __init__(self, model_type: str, out_dim: Union[str, int], patch_size: int, img_size: int, **kwargs):
         super().__init__()
 
         print(f"Creating DeiT model {model_type} with output dimension {out_dim}")
 
-        self.backbone = self.TYPES[model_type](img_size=[img_size])
+        self.backbone = self.TYPES[model_type](img_size=[img_size], patch_size=patch_size, **kwargs)
 
         if isinstance(out_dim, int):
             sizes = [self.backbone.num_features, out_dim]
@@ -537,16 +534,4 @@ if __name__ == '__main__':
     # deit_base - 226_217_728
 
     img_size = [96]
-    out_dim = '8192-8192-8192'
-    device = 'cuda:0'
-
-    model = DeiTMultiProj('small', out_dim, img_size).to(device)
-
-    bs = 64
-    x = torch.randn(bs, 3, img_size[0], img_size[0]).to(device)
-    h, z = model(x)
-
-    print(h.shape, z.shape)
-
-    params = count_trainable_parameters(model)
-    print(f'Number of trainable parameters: {params}')
+    pass

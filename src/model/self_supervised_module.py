@@ -28,6 +28,20 @@ torch.cuda.manual_seed(0)
 torch.backends.cudnn.benchmark = True
 
 
+def get_params_groups(model):
+    regularized = []
+    not_regularized = []
+    for name, param in model.named_parameters():
+        if not param.requires_grad:
+            continue
+        # we do not regularize biases nor Norm parameters
+        if name.endswith(".bias") or len(param.shape) == 1:
+            not_regularized.append(param)
+        else:
+            regularized.append(param)
+    return [{'params': regularized}, {'params': not_regularized, 'weight_decay': 0.}]
+
+
 class SelfSupervisedModule(pl.LightningModule):
 
     def __init__(self, config: Dict):
@@ -42,6 +56,7 @@ class SelfSupervisedModule(pl.LightningModule):
             self._encoder = DeiTMultiProj(**params_enc)
         else:
             raise NotImplementedError(f"Encoder type {config['encoder_type']} not implemented")
+
         self._loss_dc = self.get_loss()
         self._margin_std = self.config['std_margin']
         self._scatnet, self._hog, self._transform = self.get_feature_extraction()
@@ -131,7 +146,12 @@ class SelfSupervisedModule(pl.LightningModule):
         if opt_type == 'adam':
             opt = optim.Adam(self._encoder.parameters(), lr=lr, weight_decay=wd)
         elif opt_type == 'adamw':
-            opt = optim.AdamW(self._encoder.parameters(), lr=lr, weight_decay=wd)
+
+            if self.config['encoder_type'] == 'deit':
+                params = get_params_groups(self._encoder)
+            else:
+                params = self._encoder.parameters()
+            opt = optim.AdamW(params, lr=lr, weight_decay=wd)
         sched = optim.lr_scheduler.CosineAnnealingLR(opt, T_max=len(self.train_dataloader()))
         return [opt], [sched]
 
