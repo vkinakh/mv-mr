@@ -15,7 +15,7 @@ from kymatio.torch import Scattering2D
 from einops import rearrange
 import torch_dct as dct
 
-from src.model import ResnetMultiProj, DeiTMultiProj, HOGLayer
+from src.model import ResnetMultiProj, DeiTMultiProj, CaiTMultiProj, HOGLayer
 from src.loss import DistanceCorrelation
 from src.data import DatasetSSL
 from src.transform import AugTransform, ValTransform
@@ -54,6 +54,8 @@ class SelfSupervisedModule(pl.LightningModule):
             self._encoder = ResnetMultiProj(**params_enc)
         elif config['encoder_type'] == 'deit':
             self._encoder = DeiTMultiProj(**params_enc)
+        elif config['encoder_type'] == 'cait':
+            self._encoder = CaiTMultiProj(**params_enc)
         else:
             raise NotImplementedError(f"Encoder type {config['encoder_type']} not implemented")
 
@@ -147,7 +149,7 @@ class SelfSupervisedModule(pl.LightningModule):
             opt = optim.Adam(self._encoder.parameters(), lr=lr, weight_decay=wd)
         elif opt_type == 'adamw':
 
-            if self.config['encoder_type'] == 'deit':
+            if self.config['encoder_type'] in ['deit', 'cait']:
                 params = get_params_groups(self._encoder)
             else:
                 params = self._encoder.parameters()
