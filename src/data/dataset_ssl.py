@@ -47,7 +47,7 @@ def get_dataset(dataset: str,
             split = 'test'
 
         return datasets.STL10('./data', split=split, download=download, transform=transform)
-    elif dataset == 'imagenet':
+    elif dataset in ['imagenet', 'tiny-imagenet']:
         path = Path(path)
         if train:
             return datasets.ImageFolder(path / 'train', transform=transform)

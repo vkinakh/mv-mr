@@ -21,7 +21,8 @@ DATASET_STATS = {
     'imagenet': IMAGENET_STATS,
     'imagenet50': IMAGENET_STATS,
     'imagenet100': IMAGENET_STATS,
-    'imagenet200': IMAGENET_STATS
+    'imagenet200': IMAGENET_STATS,
+    'tiny-imagenet': IMAGENET_STATS
 }
 
 
