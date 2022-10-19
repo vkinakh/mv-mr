@@ -11,7 +11,7 @@ from kymatio.torch import Scattering2D
 from einops import rearrange
 import torch_dct as dct
 
-from src.model import DeiTMultiProj, HOGLayer
+from src.model import DeiTMultiProj, CaiTMultiProj, HOGLayer
 from src.model import WarmupCosineSchedule, CosineWDSchedule, MomentumScheduler
 from src.loss import DistanceCorrelation
 from src.data import DatasetSSL
@@ -71,8 +71,15 @@ def init_opt(
     return optimizer, scheduler, wd_scheduler
 
 
-def init_model(params: Dict):
-    encoder = DeiTMultiProj(**params)
+def init_model(encoder_type: str, params: Dict):
+
+    if encoder_type == 'deit':
+        encoder = DeiTMultiProj(**params)
+    elif encoder_type == 'cait':
+        encoder = CaiTMultiProj(**params)
+    else:
+        raise ValueError(f'Unknown encoder type {encoder_type}')
+
     target_encoder = copy.deepcopy(encoder)
     target_encoder.eval()
 
@@ -95,7 +102,7 @@ class DeiTSelfSupervisedModule(pl.LightningModule):
         # load encoders
         self._config = config
         params_enc = config['encoder']
-        self.encoder, self.target_encoder = init_model(params_enc)
+        self.encoder, self.target_encoder = init_model(config['encoder_type'], params_enc)
 
         self._loss_dc = get_loss()
         self._margin_std = self.config['std_margin']
