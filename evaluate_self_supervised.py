@@ -55,9 +55,14 @@ def linear_evaluation(encoder: nn.Module, config: Dict, emb_type: str = 'h',  ep
 
 def evaluate(args):
     config = get_config(args.config)
+    ckpt = torch.load(args.ckpt, map_location=get_device())
+
+    if 'config' in ckpt.keys():
+        print('Loading config from checkpoint')
+        config = ckpt['config']
+
     model = SelfSupervisedModule(config=config)
 
-    ckpt = torch.load(args.ckpt, map_location=get_device())
     encoder = model.encoder.eval()
     encoder.load_state_dict(ckpt['encoder'])
 
@@ -70,9 +75,13 @@ def evaluate(args):
 def evaluate_finetuner(args):
     config = get_config(args.config)
     device = get_device()
-    model = SelfSupervisedModule(config=config)
-
     ckpt = torch.load(args.ckpt, map_location=device)
+
+    if 'config' in ckpt.keys():
+        print('Loading config from checkpoint')
+        config = ckpt['config']
+
+    model = SelfSupervisedModule(config=config)
 
     encoder = model.encoder.eval().to(device)
     encoder.load_state_dict(ckpt['encoder'])
