@@ -12,3 +12,4 @@ from .self_supervised_module import SelfSupervisedModule, OnlineFineTuner
 from .semi_supervised_module import SemiSupervisedModule
 from .voc_linear_eval_module import VocLinearEvalModule
 from .deit_self_supervised_module import DeiTSelfSupervisedModule
+from .dino_aug_self_supervised_module import DINOAugSelfSupervisedModule
