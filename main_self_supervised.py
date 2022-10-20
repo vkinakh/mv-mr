@@ -52,6 +52,7 @@ def main(args) -> None:
                          max_epochs=epochs,
                          check_val_every_n_epoch=eval_every,
                          strategy='ddp',
+                         log_every_n_steps=config['log_every'],
                          precision=precision,
                          accumulate_grad_batches=accumulate_grad_batches,
                          gradient_clip_val=config['gradient_clip_val'])

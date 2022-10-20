@@ -19,27 +19,13 @@ from src.model import ResnetMultiProj, DeiTMultiProj, CaiTMultiProj, HOGLayer
 from src.loss import DistanceCorrelation
 from src.data import DatasetSSL
 from src.transform import AugTransform, ValTransform
-from src.utils import std_filter_torch, split_into_patches, infinite_loader
+from src.utils import std_filter_torch, split_into_patches, infinite_loader, get_params_groups
 
 
 np.random.seed(0)
 torch.manual_seed(0)
 torch.cuda.manual_seed(0)
 torch.backends.cudnn.benchmark = True
-
-
-def get_params_groups(model):
-    regularized = []
-    not_regularized = []
-    for name, param in model.named_parameters():
-        if not param.requires_grad:
-            continue
-        # we do not regularize biases nor Norm parameters
-        if name.endswith(".bias") or len(param.shape) == 1:
-            not_regularized.append(param)
-        else:
-            regularized.append(param)
-    return [{'params': regularized}, {'params': not_regularized, 'weight_decay': 0.}]
 
 
 class SelfSupervisedModule(pl.LightningModule):
