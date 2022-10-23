@@ -89,15 +89,20 @@ class EmbeddingExtractor:
             lbls.extend(batch_y)
 
             with torch.no_grad():
-                h, z = self._encoder(batch_x)
+                out = self._encoder(batch_x)
 
-            if self._embedding_type == 'h':
-                features.extend(h.cpu().detach().numpy())
-            elif self._embedding_type == 'z':
-                features.extend(z.cpu().detach().numpy())
-            elif self._embedding_type == 'concat':
-                f = torch.cat((h, z), 1)
-                features.extend(f.cpu().detach().numpy())
+            if isinstance(out, tuple):
+                h, z = out
+
+                if self._embedding_type == 'h':
+                    features.extend(h.cpu().detach().numpy())
+                elif self._embedding_type == 'z':
+                    features.extend(z.cpu().detach().numpy())
+                elif self._embedding_type == 'concat':
+                    f = torch.cat((h, z), 1)
+                    features.extend(f.cpu().detach().numpy())
+            else:
+                features.extend(out.cpu().detach().numpy())
 
         features = np.array(features)
         lbls = np.array(lbls)
