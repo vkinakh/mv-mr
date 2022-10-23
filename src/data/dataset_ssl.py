@@ -7,6 +7,18 @@ from torchvision import datasets
 from src.data import ImageNetSubset
 
 
+def get_imagenet_labels():
+    with open('./data/imagenet1k_idx_to_class.txt', 'r') as f:
+        idx_to_class = eval(f.read())
+    return [idx_to_class[i] for i in range(1000)]
+
+
+dataset_labels = {
+    'stl10': ['airplane', 'bird', 'car', 'cat', 'deer', 'dog', 'horse', 'monkey', 'ship', 'truck'],
+    'imagenet': get_imagenet_labels(),
+}
+
+
 def get_dataset(dataset: str,
                 train: bool,
                 transform=None,
