@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader
 
 from src.data import get_dataset
 from src.transform import ValTransform
@@ -61,16 +61,6 @@ class EmbeddingExtractor:
         ds_test = get_dataset(self._dataset_name, train=False,
                               transform=trans, path=self._path,
                               download=True, unlabeled=False)
-
-        # if imagenet, select 5% of training samples and 20% of test samples
-        if self._dataset_name == 'imagenet' and not self._full_test:
-            n_train = int(0.05 * len(ds_train))
-            indices_train = np.random.randint(0, len(ds_train), size=n_train)
-            ds_train = Subset(ds_train, indices_train)
-
-            n_test = int(0.2 * len(ds_test))
-            indices_test = np.random.randint(0, len(ds_test), size=n_test)
-            ds_test = Subset(ds_test, indices_test)
 
         dl_train = DataLoader(ds_train, batch_size=self._batch_size, num_workers=16)
         dl_test = DataLoader(ds_test, batch_size=self._batch_size, num_workers=16)
