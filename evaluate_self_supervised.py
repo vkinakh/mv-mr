@@ -117,11 +117,11 @@ def evaluate_finetuner(args):
     n_workers = config['n_workers']
     val_dl = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=n_workers)
 
-    encoder = ResnetMultiProj(**config['encoder']).eval().to(device)
+    encoder = ResnetMultiProj(**config['encoder']).eval()
     encoder.load_state_dict(ckpt['encoder'])
-
     finetuner = nn.Linear(encoder.num_features, n_classes).to(device)
     finetuner.load_state_dict(ckpt['online_finetuner'])
+    encoder = encoder.backbone.to(device)
 
     acc = torchmetrics.Accuracy().to(device)
     acc_top5 = torchmetrics.Accuracy(top_k=5).to(device)
@@ -133,7 +133,7 @@ def evaluate_finetuner(args):
         batch_x_ten = torch.cat(ten_crop(batch_x, (size, size)))
 
         with torch.no_grad():
-            h, _ = encoder(batch_x_ten)
+            h = encoder(batch_x_ten)
             logits = finetuner(h)
 
         logits = logits.view(10, -1, logits.shape[-1])

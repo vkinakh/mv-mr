@@ -26,7 +26,7 @@ class SemiSupervisedModule(pl.LightningModule):
         self.config = config
         self.encoder = encoder
         self.loss = nn.CrossEntropyLoss()
-        self.classifier = nn.Linear(2048, config['dataset']['n_classes'])
+        self.classifier = nn.Linear(config['num_features'], config['dataset']['n_classes'])
 
         self.hparams.batch_size = config['batch_size']  # set start batch_size
         self.hparams.lr = eval(config['lr'])
