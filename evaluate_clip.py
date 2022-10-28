@@ -1,56 +1,99 @@
 import argparse
-from typing import Dict
+from pathlib import Path
 
 from tqdm import tqdm
 
 import torch
 import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
+from torch.utils.data import DataLoader
+from torchvision import transforms
 import torchmetrics
 import open_clip
 
-from src.model import EmbeddingExtractor, LinearEvaluator
 from src.data import dataset_labels, get_dataset
+from src.transform import ValTransform, DATASET_STATS
 from src.utils import get_config, get_device
 
 
-def linear_evaluation(encoder: nn.Module, config: Dict, emb_type: str = 'h',  epochs: int = 100) -> float:
-    """Runs linear evaluation on the pretrained encoder
+def evaluate_linear(args):
+    out_path = Path(args.out_path)
+    out_path.mkdir(exist_ok=True, parents=True)
 
-    Args:
-        encoder: pretrained encoder
-        config: configs
-        emb_type: type of embeddings used for classification. Choices: `h`, `z`, `concat`
-        epochs: number of epochs to train linear evaluation
-
-    Returns:
-        float: classification accuracy
-    """
-
-    encoder.eval()
-
-    n_classes = config['dataset']['n_classes']
-    batch_size = config['batch_size']
-    size = 224
-    path = config['dataset']['path']
-    name = config['dataset']['name']
+    epochs = args.epochs
+    config = get_config(args.config)
     device = get_device()
 
-    encoder = encoder.to(device)
+    clip = open_clip.create_model(**config['clip'], device=device, jit=False).visual
+    clip.eval()
 
-    print('Start embedding extraction')
-    extractor = EmbeddingExtractor(encoder, device=device,
-                                   dataset_name=name, size=size,
-                                   batch_size=config['batch_size'],
-                                   path=path,
-                                   embedding_type=emb_type)
-    train_data, train_labels, test_data, test_labels = extractor.get_features()
-    print('Finish embedding extraction')
+    # classifier
+    n_classes = config['dataset']['n_classes']
+    classifier = nn.Sequential(nn.Linear(clip.output_dim, n_classes)).to(device)
 
-    evaluator = LinearEvaluator(n_features=train_data.shape[1],
-                                n_classes=n_classes, device=device,
-                                batch_size=batch_size)
-    accuracy = evaluator.run_evaluation(train_data, train_labels, test_data, test_labels, epochs)
-    return accuracy
+    # load train dataset
+    ds_name = config['dataset']['name']
+    size = config['dataset']['size']
+    path = config['dataset']['path']
+    ds_stats = DATASET_STATS[ds_name]
+
+    train_trans = transforms.Compose([
+        transforms.RandomResizedCrop(size),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize(ds_stats['mean'], ds_stats['std'])
+    ])
+    val_trans = ValTransform(ds_name, size)
+
+    train_ds = get_dataset(ds_name, train=True, path=path, transform=train_trans)
+    val_ds = get_dataset(ds_name, train=False, path=path, transform=val_trans)
+
+    batch_size = config['batch_size']
+    n_workers = config['n_workers']
+    train_dl = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=n_workers)
+    val_dl = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=n_workers)
+
+    # optimizer
+    opt = optim.Adam(classifier.parameters(), lr=0.001)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(opt, args.epochs, eta_min=0)
+
+    best_acc = 0
+    best_epoch = 0
+    for i in range(epochs):
+        classifier.train()
+        pbar = tqdm(train_dl)
+        for x, y in pbar:
+            x, y = x.to(device), y.to(device)
+
+            with torch.no_grad():
+                h = clip(x)
+            h = h.detach()
+            y_hat = classifier(h)
+            loss = F.cross_entropy(y_hat, y)
+            opt.zero_grad()
+            loss.backward()
+            opt.step()
+            pbar.set_description(f'Epoch: {i}. Loss: {loss.item():.3f}')
+        scheduler.step()
+        acc = torchmetrics.Accuracy().to(device)
+        for x, y in tqdm(val_dl):
+            x, y = x.to(device), y.to(device)
+
+            with torch.no_grad():
+                h = clip(x)
+            y_hat = classifier(h)
+            acc(y_hat, y)
+        curr_acc = acc.compute()
+        print(f'Epoch: {i}, Acc: {curr_acc}')
+        if curr_acc > best_acc:
+            best_acc = curr_acc
+            best_epoch = i
+            print(f'Best acc: {best_acc} at epoch {best_epoch}')
+
+            torch.save({'classifier': classifier.state_dict()}, f'./{args.out_path}/{ds_name}_clip_classifier.pth')
+
+    print(f'Best acc: {best_acc} at epoch {best_epoch}')
 
 
 def evaluate_zero_shot(args):
@@ -67,7 +110,7 @@ def evaluate_zero_shot(args):
 
     path = config['dataset']['path']
     dataset = get_dataset(dataset_name, train=False, transform=trans, path=path, download=True, unlabeled=False)
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=64, shuffle=False)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=config['batch_size'], shuffle=False)
 
     with torch.no_grad():
         text_feat = clip.encode_text(text_tokens)
@@ -91,21 +134,12 @@ def evaluate_zero_shot(args):
     print(f'Acc: {curr_acc}, Acc 5: {curr_acc_top5}')
 
 
-def evaluate_linear(args):
-    config = get_config(args.config)
-    device = get_device()
-
-    clip = open_clip.create_model(**config['clip'], device=device, jit=False).visual
-    clip.eval()
-
-    acc1, acc5 = linear_evaluation(clip, config, emb_type='h', epochs=200)
-    print(f'Acc: {acc1}, Acc 5: {acc5}')
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', '-c', type=str, required=True, help='Path to the config file.')
     parser.add_argument('--mode', '-m', type=str, required=True, choices=['linear', 'zero_shot'])
+    parser.add_argument('--epochs', '-e', type=int, default=100)
+    parser.add_argument('--out_path', '-o', type=str, default='.')
     args = parser.parse_args()
 
     if args.mode == 'linear':
