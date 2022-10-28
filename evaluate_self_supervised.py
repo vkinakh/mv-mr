@@ -1,75 +1,103 @@
-from typing import Dict
 import argparse
 
 from tqdm import tqdm
 
 import torch
 import torch.nn as nn
+import torch.optim as optim
 import torch.nn.functional as F
-from torch.utils.data import TensorDataset, DataLoader
+from torch.utils.data import DataLoader
+from torchvision import transforms
+from torchvision.transforms.functional import ten_crop
 import torchmetrics
 
-from src.model import SelfSupervisedModule, EmbeddingExtractor, LinearEvaluator
+from src.model import ResnetMultiProj
+from src.data import get_dataset
+from src.transform import ValTransform, DATASET_STATS
 from src.utils import get_config, get_device
 
 
-def linear_evaluation(encoder: nn.Module, config: Dict, emb_type: str = 'h',  epochs: int = 100) -> float:
-    """Runs linear evaluation on the pretrained encoder
+def evaluate_retrain(args):
+    epochs = args.epochs
+    config = get_config(args.config)
+    device = get_device()
+    ckpt = torch.load(args.ckpt, map_location=device)
 
-    Args:
-        encoder: pretrained encoder
-        config: configs
-        emb_type: type of embeddings used for classification. Choices: `h`, `z`, `concat`
-        epochs: number of epochs to train linear evaluation
-
-    Returns:
-        float: classification accuracy
-    """
-
-    encoder.eval()
-
-    n_classes = config['dataset']['n_classes']
-    batch_size = config['batch_size']
+    # load train dataset
+    ds_name = config['dataset']['name']
     size = config['dataset']['size']
     path = config['dataset']['path']
-    name = config['dataset']['name']
-    device = get_device()
+    n_classes = config['dataset']['n_classes']
+    ds_stats = DATASET_STATS[ds_name]
 
-    encoder = encoder.to(device)
+    train_trans = transforms.Compose([
+        transforms.RandomResizedCrop(size),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize(ds_stats['mean'], ds_stats['std'])
+    ])
+    val_trans = ValTransform(ds_name, size)
 
-    print('Start embedding extraction')
-    extractor = EmbeddingExtractor(encoder, device=device,
-                                   dataset_name=name, size=size,
-                                   batch_size=config['batch_size'],
-                                   path=path,
-                                   embedding_type=emb_type)
-    train_data, train_labels, test_data, test_labels = extractor.get_features()
-    print('Finish embedding extraction')
+    train_ds = get_dataset(ds_name, train=True, path=path, transform=train_trans)
+    val_ds = get_dataset(ds_name, train=False, path=path, transform=val_trans)
 
-    evaluator = LinearEvaluator(n_features=train_data.shape[1],
-                                n_classes=n_classes, device=device,
-                                batch_size=batch_size)
-    accuracy = evaluator.run_evaluation(train_data, train_labels, test_data, test_labels, epochs)
-    return accuracy
+    batch_size = config['batch_size']
+    n_workers = config['n_workers']
+    train_dl = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=n_workers)
+    val_dl = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=n_workers)
 
-
-def evaluate(args):
-    config = get_config(args.config)
-    ckpt = torch.load(args.ckpt, map_location=get_device())
-
-    if 'config' in ckpt.keys():
-        print('Loading config from checkpoint')
-        config = ckpt['config']
-
-    model = SelfSupervisedModule(config=config)
-
-    encoder = model.encoder.eval()
+    encoder = ResnetMultiProj(**config['encoder']).to(device)
     encoder.load_state_dict(ckpt['encoder'])
+    encoder = encoder.backbone
+    encoder.eval()
 
-    for emb_type in ['h']:  #, 'z', 'concat']:
-        print(f'Evaluating {emb_type}')
-        acc, acc_5 = linear_evaluation(encoder, config, emb_type, epochs=200)
-        print(f'Emb type: {emb_type}, Acc: {acc}, Acc 5: {acc_5}')
+    finetuner = nn.Linear(encoder.num_features, n_classes).to(device)
+
+    if 'online_finetuner' in ckpt.keys():
+        finetuner.load_state_dict(ckpt['online_finetuner'])
+
+    # optimizer
+    opt = optim.Adam(
+        finetuner.parameters(),
+        lr=0.0001
+    )
+
+    best_acc = 0
+    best_epoch = 0
+    for i in range(epochs):
+        finetuner.train()
+        pbar = tqdm(train_dl)
+        for x, y in pbar:
+            x, y = x.to(device), y.to(device)
+
+            with torch.no_grad():
+                h = encoder(x)
+            h = h.detach()
+            y_hat = finetuner(h)
+            loss = F.cross_entropy(y_hat, y)
+            opt.zero_grad()
+            loss.backward()
+            opt.step()
+            pbar.set_description(f'Epoch: {i}. Loss: {loss.item():.3f}')
+
+        finetuner.eval()
+        acc = torchmetrics.Accuracy().to(device)
+        for x, y in tqdm(val_dl):
+            x, y = x.to(device), y.to(device)
+
+            with torch.no_grad():
+                h = encoder(x)
+            y_hat = finetuner(h)
+            acc(y_hat, y)
+        curr_acc = acc.compute()
+        print(f'Epoch: {i}, Acc: {curr_acc}')
+        if curr_acc > best_acc:
+            best_acc = curr_acc
+            best_epoch = i
+
+            torch.save(finetuner.state_dict(), f'finetuner_{ds_name}_{size}.pth')
+
+    print(f'Best epoch: {best_epoch}, Best acc: {best_acc}')
 
 
 def evaluate_finetuner(args):
@@ -77,47 +105,47 @@ def evaluate_finetuner(args):
     device = get_device()
     ckpt = torch.load(args.ckpt, map_location=device)
 
-    if 'config' in ckpt.keys():
-        print('Loading config from checkpoint')
-        config = ckpt['config']
-
-    model = SelfSupervisedModule(config=config)
-
-    encoder = model.encoder.eval().to(device)
-    encoder.load_state_dict(ckpt['encoder'])
-    finetuner = model.online_finetuner.eval().to(device)
-    finetuner.load_state_dict(ckpt['online_finetuner'])
-
-    batch_size = config['batch_size']
+    # load train dataset
+    ds_name = config['dataset']['name']
     size = config['dataset']['size']
     path = config['dataset']['path']
-    name = config['dataset']['name']
-    emb_type = 'h'
+    n_classes = config['dataset']['n_classes']
 
-    extractor = EmbeddingExtractor(encoder, device=device,
-                                   dataset_name=name, size=size,
-                                   batch_size=config['batch_size'],
-                                   path=path,
-                                   embedding_type=emb_type)
-    train_data, train_labels, test_data, test_labels = extractor.get_features()
+    val_trans = ValTransform(ds_name, size)
+    val_ds = get_dataset(ds_name, train=False, path=path, transform=val_trans)
+    batch_size = config['batch_size']
+    n_workers = config['n_workers']
+    val_dl = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=n_workers)
 
-    test = TensorDataset(torch.from_numpy(test_data), torch.from_numpy(test_labels).type(torch.long))
-    test_loader = DataLoader(test, batch_size=batch_size, shuffle=False)
+    encoder = ResnetMultiProj(**config['encoder']).eval().to(device)
+    encoder.load_state_dict(ckpt['encoder'])
+
+    finetuner = nn.Linear(encoder.num_features, n_classes).to(device)
+    finetuner.load_state_dict(ckpt['online_finetuner'])
 
     acc = torchmetrics.Accuracy().to(device)
     acc_top5 = torchmetrics.Accuracy(top_k=5).to(device)
 
-    for batch_x, batch_y in tqdm(test_loader, desc='Evaluating'):
-        batch_x, batch_y = batch_x.to(device), batch_y.to(device)
+    for (batch_x, batch_y) in tqdm(val_dl, desc='Evaluating'):
+        batch_x = batch_x.to(device)
+        batch_y = batch_y.to(device)
+
+        batch_x_ten = torch.cat(ten_crop(batch_x, (size, size)))
 
         with torch.no_grad():
-            logits = finetuner(batch_x)
-        pred = F.softmax(logits, dim=1)
-        curr_acc = acc(pred, batch_y)
-        curr_acc_top5 = acc_top5(pred, batch_y)
+            h, _ = encoder(batch_x_ten)
+            logits = finetuner(h)
 
-    print(f'Acc Top 1: {acc.compute()}')
-    print(f'Acc Top 5: {acc_top5.compute()}')
+        logits = logits.view(10, -1, logits.shape[-1])
+        logits_avg = logits.mean(dim=0)
+
+        preds = torch.argmax(logits, dim=-1)
+        mode, _ = torch.mode(preds, dim=0)
+
+        curr_acc = acc(logits_avg, batch_y)
+        curr_acc_5 = acc_top5(logits_avg, batch_y)
+
+    print(f'Acc Top 1: {acc.compute()}, acc Top 5: {acc_top5.compute()}')
 
 
 if __name__ == '__main__':
@@ -128,12 +156,15 @@ if __name__ == '__main__':
     parser.add_argument('--ckpt',
                         help='Path to checkpoint',
                         type=str)
+    parser.add_argument('--epochs', '-e',
+                        help='Number of epochs',
+                        type=int, default=100)
     parser.add_argument('--retrain',
                         action='store_true',
                         help='If true, linear classifier will be retrained')
     args = parser.parse_args()
 
     if args.retrain:
-        evaluate(args)
+        evaluate_retrain(args)
     else:
         evaluate_finetuner(args)
