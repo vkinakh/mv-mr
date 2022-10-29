@@ -24,13 +24,15 @@ def evaluate(args):
     ckpt = torch.load(path_ckpt, map_location=device)
 
     # load encoder
-    encoder = ResnetMultiProj(**config['encoder']).backbone
-    encoder = encoder.to(device)
+    encoder = ResnetMultiProj(**config['encoder'])
+    num_features = encoder.num_features
+
+    encoder = encoder.backbone.to(device)
     encoder.load_state_dict(ckpt['encoder'])
     encoder.eval()
 
     # load classifier
-    classifier = nn.Linear(2048, config['dataset']['n_classes'])
+    classifier = nn.Linear(num_features, config['dataset']['n_classes'])
     classifier = classifier.to(device)
     classifier.load_state_dict(ckpt['classifier'])
     classifier.eval()
