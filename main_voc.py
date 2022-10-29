@@ -3,38 +3,40 @@ from datetime import datetime
 import argparse
 import yaml
 
+import torch
 import pytorch_lightning as pl
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 
-from src.model import VocLinearEvalModule, SelfSupervisedModule
+from src.model import VocLinearEvalModule, ResnetMultiProj
 from src.utils import get_config
 
 
 def main(args) -> None:
-    path_config_self = args.config_self
-    path_config_voc = args.config_voc
-    path_self = args.path_self
+    path_config = args.config
+    path_ckpt = args.path_ckpt
     auto_bs = args.auto_bs
     auto_lr = args.auto_lr
 
     now = datetime.now()
     date_time = now.strftime("%Y-%m-%d-%H-%M-%S")
-    config_self = get_config(path_config_self)
-    config_voc = get_config(path_config_voc)
+    config = get_config(path_config)
 
-    # load pretrained self-supervised model
-    module = SelfSupervisedModule.load_from_checkpoint(checkpoint_path=path_self, config=config_self)
-    # configure model for VOC evaluation
-    module_voc = VocLinearEvalModule(encoder=module.encoder.backbone, config=config_voc)
+    encoder = ResnetMultiProj(**config['encoder'])
+    ckpt = torch.load(path_ckpt)
+    encoder.load_state_dict(ckpt['encoder'])
+    encoder = encoder.backbone
+
+    # configure model for VOC training
+    module_voc = VocLinearEvalModule(encoder=encoder, config=config)
 
     # configure training for semi-supervised model
-    logger = pl_loggers.TensorBoardLogger(save_dir='lightning_logs', name=f"{date_time}_{config_voc['comment']}")
-    precision = 16 if config_voc['fp16'] else 32
-    accumulate_grad_batches = 1 if not config_voc['accumulate_grad_batches'] \
-        else config_voc['accumulate_grad_batches']
-    epochs = config_voc['epochs']
-    eval_every = config_voc['eval_every']
+    logger = pl_loggers.TensorBoardLogger(save_dir='lightning_logs', name=f"{date_time}_{config['comment']}")
+    precision = 16 if config['fp16'] else 32
+    accumulate_grad_batches = 1 if not config['accumulate_grad_batches'] \
+        else config['accumulate_grad_batches']
+    epochs = config['epochs']
+    eval_every = config['eval_every']
 
     # configure callbacks
     callback_lr = LearningRateMonitor('step')
@@ -59,31 +61,29 @@ def main(args) -> None:
         print(f'LR: {lr}')
         module_voc.hparams.lr = lr
         # save suggested lr and bs to config
-        config_voc['lr_suggested'] = lr
+        config['lr_suggested'] = lr
 
     trainer.tune(module_voc)
 
     if auto_bs:
-        config_voc['batch_size_suggested'] = module_voc.hparams.batch_size
+        config['batch_size_suggested'] = module_voc.hparams.batch_size
 
     # semi-supervised module checkpoint
-    path_checkpoint = config_voc['fine_tune_from']
+    path_checkpoint = config['fine_tune_from']
 
     trainer.fit(module_voc, ckpt_path=path_checkpoint)
 
     # save config to file
-    save_path = Path(logger.experiment.get_logdir()) / Path(path_config_voc).name
+    save_path = Path(logger.experiment.get_logdir()) / Path(path_config).name
     with open(save_path, 'w') as f:
-        yaml.dump(config_voc, f)
+        yaml.dump(config, f)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config_voc', type=str, required=True,
+    parser.add_argument('--config', '-c', type=str, required=True,
                         help='path to config file for VOC evaluation')
-    parser.add_argument('--config_self', type=str, required=True,
-                        help='path to config file for self-supervised model')
-    parser.add_argument('--path_self', type=str, required=True,
+    parser.add_argument('--path_ckpt', '-p', type=str, required=True,
                         help='path to checkpoint file for self-supervised model')
     parser.add_argument('--auto_bs', action='store_true',
                         help='automatically determine batch size')
