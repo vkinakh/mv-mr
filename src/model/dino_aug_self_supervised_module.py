@@ -129,12 +129,13 @@ class DINOAugSelfSupervisedModule(pl.LightningModule):
             # h_loc, z_loc = self._encoder(img_loc)
             # if self.config['normalize_z']:
             #     z_loc = F.normalize(z_loc, dim=1)
-            # z_loc_scaled = z_loc / 32
+            # feat = z_loc / 32
 
             feat = img_loc.flatten(start_dim=1) / 32
             loss_dc_zz_loc = 1 - self._loss_dc(z_ga_scaled, feat)
             loss_dc_loc += loss_dc_zz_loc
 
+        loss += loss_dc_loc
         res_dict = {
             f'{stage}/loss': loss.item(),
             f'{stage}/MSE': loss_mse.item(),
@@ -142,7 +143,6 @@ class DINOAugSelfSupervisedModule(pl.LightningModule):
             f'{stage}/DC_zz': loss_dc_zz.item(),
             f'{stage}/DC_loc': loss_dc_loc.item(),
         }
-
         self.log_dict(res_dict)
 
         # manual lr scheduling

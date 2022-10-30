@@ -96,53 +96,11 @@ def evaluate_linear(args):
     print(f'Best acc: {best_acc} at epoch {best_epoch}')
 
 
-def evaluate_zero_shot(args):
-    config = get_config(args.config)
-    device = get_device()
-
-    clip, _, trans = open_clip.create_model_and_transforms(**config['clip'], device=device, jit=False)
-    clip.eval()
-
-    # get text labels
-    dataset_name = config['dataset']['name']
-    zero_shot_labels = [f'a photo of a {label}' for label in dataset_labels[dataset_name]]
-    text_tokens = open_clip.tokenize(zero_shot_labels).to(device)
-
-    path = config['dataset']['path']
-    dataset = get_dataset(dataset_name, train=False, transform=trans, path=path, download=True, unlabeled=False)
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=config['batch_size'], shuffle=False)
-
-    with torch.no_grad():
-        text_feat = clip.encode_text(text_tokens)
-        text_feat /= text_feat.norm(dim=-1, keepdim=True)
-
-    acc = torchmetrics.Accuracy().to(device)
-    acc_top5 = torchmetrics.Accuracy(top_k=5).to(device)
-    for batch in tqdm(dataloader):
-        im_orig, label = batch
-        im_orig = im_orig.to(device)
-        label = label.to(device)
-
-        with torch.no_grad():
-            img_feat = clip.encode_image(im_orig)
-            img_feat /= img_feat.norm(dim=-1, keepdim=True)
-
-        text_probs = (img_feat @ text_feat.T).softmax(dim=-1)
-        curr_acc = acc(text_probs, label)
-        curr_acc_top5 = acc_top5(text_probs, label)
-
-    print(f'Acc: {curr_acc}, Acc 5: {curr_acc_top5}')
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', '-c', type=str, required=True, help='Path to the config file.')
-    parser.add_argument('--mode', '-m', type=str, required=True, choices=['linear', 'zero_shot'])
     parser.add_argument('--epochs', '-e', type=int, default=100)
     parser.add_argument('--out_path', '-o', type=str, default='.')
     args = parser.parse_args()
 
-    if args.mode == 'linear':
-        evaluate_linear(args)
-    elif args.mode == 'zero_shot':
-        evaluate_zero_shot(args)
+    evaluate_linear(args)
