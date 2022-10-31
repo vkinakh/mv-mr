@@ -7,13 +7,12 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-from torchvision import transforms
 from torchvision.transforms.functional import ten_crop
 import torchmetrics
 
 from src.model import ResnetMultiProj
 from src.data import get_dataset
-from src.transform import ValTransform, DATASET_STATS
+from src.transform import ValTransform, AugTransform
 from src.utils import get_config, get_device
 
 
@@ -28,14 +27,8 @@ def evaluate_retrain(args):
     size = config['dataset']['size']
     path = config['dataset']['path']
     n_classes = config['dataset']['n_classes']
-    ds_stats = DATASET_STATS[ds_name]
 
-    train_trans = transforms.Compose([
-        transforms.RandomResizedCrop(size),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        transforms.Normalize(ds_stats['mean'], ds_stats['std'])
-    ])
+    train_trans = AugTransform(ds_name, size)
     val_trans = ValTransform(ds_name, size)
 
     train_ds = get_dataset(ds_name, train=True, path=path, transform=train_trans)
@@ -47,20 +40,19 @@ def evaluate_retrain(args):
     val_dl = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=n_workers)
 
     encoder = ResnetMultiProj(**config['encoder']).to(device)
+    num_features = encoder.num_features
     encoder.load_state_dict(ckpt['encoder'])
     encoder = encoder.backbone
     encoder.eval()
 
-    finetuner = nn.Linear(encoder.num_features, n_classes).to(device)
+    finetuner = nn.Linear(num_features, n_classes).to(device)
 
     if 'online_finetuner' in ckpt.keys():
         finetuner.load_state_dict(ckpt['online_finetuner'])
 
     # optimizer
-    opt = optim.Adam(
-        finetuner.parameters(),
-        lr=0.0001
-    )
+    opt = optim.Adam(finetuner.parameters(), lr=0.001)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(opt, args.epochs, eta_min=0)
 
     best_acc = 0
     best_epoch = 0
@@ -79,6 +71,7 @@ def evaluate_retrain(args):
             loss.backward()
             opt.step()
             pbar.set_description(f'Epoch: {i}. Loss: {loss.item():.3f}')
+        scheduler.step()
 
         finetuner.eval()
         acc = torchmetrics.Accuracy().to(device)
