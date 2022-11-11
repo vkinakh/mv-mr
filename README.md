@@ -41,7 +41,7 @@ conda env create -f environment.yml
 ### Training of the self-supervised model
 
 To run the training of the self-supervised model, first fill the **config file**. Examples of the config files: 
-`configs/stl10_self_supervised.yaml`, `configs/imagenet_self_supervised.yaml`, `configs/imagenet50_self_supervised.yaml`.
+`configs/stl10_self_supervised.yaml`, `configs/imagenet_self_supervised.yaml`.
 
 Then run
 ```commandline
@@ -55,13 +55,25 @@ rate, add `--auto_lr` flag.
 
 To run the training of the semi-supervised model (fine-tuning the pretrained self-supervised model), first fill the 
 **config file**. Examples of the config files: `configs/stl10_semi_supervised.yaml`, 
-`configs/imagenet_semi_supervised.yaml`, `configs/imagenet50_semi_supervised.yaml`.
+`configs/imagenet_semi_supervised.yaml`.
 
 Then run
 ```commandline
-python main_semi_supervised --config_self_supervised <path to self-supervised config> --config_semi_supervised <path to semi-supervised config> --path_self_supervised <path to pretrained self-supervised model>
+python main_semi_supervised \ 
+--config <path to semi-supervised config> \ 
+--path_ckpt <path to pretrained self-supervised model>
 ```
+If you want to automatically select the batch size, add `--auto_bs` flag. If you want to automatically select learning 
+rate, add `--auto_lr` flag.
 
+### Training of the distillation of CLIP into ResNet50
+
+To run the self-supervised distillation of CLIP into ResNet50, first fill the **config** file. Example of the 
+config file: `configs/imagenet_clip_self_supervised.yaml`.
+
+```commandline
+python main_clip_self_supervised.py --config <path to the config>
+```
 If you want to automatically select the batch size, add `--auto_bs` flag. If you want to automatically select learning 
 rate, add `--auto_lr` flag.
 
@@ -75,7 +87,9 @@ config file: `configs/imagenet_voc.yaml`.
 
 Then run
 ```commandline
-python main_voc.py --config_voc <path to VOC config> --config_self <path to self-supervised config> --path_self <path to pretrained self-supervised model>
+python main_voc.py  --config_voc <path to VOC config> \ 
+--config_self <path to self-supervised config> \ 
+--path_self <path to pretrained self-supervised model>
 ```
 
 If you want to automatically select the batch size, add `--auto_bs` flag. If you want to automatically select learning 
@@ -90,7 +104,9 @@ embeddings from the pretrained encoder. Script will process validation set and d
 To run self-supervised model evaluation:
 
 ```commandline
-python evaluate_self_supervised.py --config <path to self-supervised config> --ckpt <path to model to evaluate>
+python evaluate_self_supervised.py --config <path to self-supervised config> \ 
+--ckpt <path to model to evaluate> \ 
+--epochs <number of epochs to filetune>
 ```
 
 By default it will evaluate the linear classifier (called online finetuner), that is trained alongside the self-supervised 
@@ -106,6 +122,20 @@ To run semi-supervised model evaluation:
 python evaluate_semi_supervised.py --config <path to semi-supervised config> --ckpt <path to train semi-supervised model>
 ```
 
+### Evaluate distillation
+To run the evaluation of the ResNet50 distilled from CLIP, simply run self-supervised model avaluation:
+
+```commandline
+python evaluate_self_supervised.py --config <path to the config> \ 
+--ckpt <path to model to evaluate> \ 
+--epochs <number of epochs to filetune>
+```
+
+By default it will evaluate the linear classifier (called online finetuner), that is trained alongside the encoder.
+If you want to retrain the linear classifier from scratch, add `--retrain` flag. Retraining might take some 
+time, but it generally provides higher accuracy. 
+
+
 ### Evaluate multiclass classification on VOC07
 
 To run multiclass classification evaluation on VOC07:
@@ -120,22 +150,20 @@ python evaluate_voc.py --config <path to VOC config> --ckpt <path to model train
 | Dataset     | Top-1 accuracy | Top-5 accuracy | Download link |
 |-------------|----------------|----------------|-------|
 | STL10       | 89.67%         | 99.46%         | Coming soon |
-| ImageNet-50 | 77.3%          | 93.4%          | Coming soon | 
-| ImageNet-1K | 71.4%          | 89.9%          | Coming soon | 
+| ImageNet-1K | 74.5%          | 92.1%          | Coming soon | 
 
  
 ### Semi-supervised models
 | Dataset     | Top-1 accuracy | Top-5 accuracy | Percentage of labels | Download link |
 |-------------|----------------|----------------|----------------------|--------------|
-| ImageNet-50 | 45.4%          | 76.3%          | 1%                   |Coming soon    |
-| ImageNet-50 | 74.0%          | 91.8%          | 10%                  |Coming soon    |
-| ImageNet-1K | 49.6%          | 75.0%          | 1%                   |Coming soon    | 
-| ImageNet-1K | 67.9%          | 88.3%          | 10%                  |Coming soon    | 
+| ImageNet-1K | 56.1%          | 79.4%          | 1%                   |Coming soon    | 
+| ImageNet-1K | 69.9%          | 89.5%          | 10%                  |Coming soon    | 
 
-### VOC07 model
-| Dataset | map  | Download link |
-|---------|------|-------------|
-| VOC07   | 85.5 | Coming soon   
+### Distillation
+| Dataset     | Top-1 accuracy | Download link |
+|-------------|----------------|----------|
+| ImageNet-1K | 75.3%          |  Coming soon |
+| STL10 | 95.6%| Coming soon |
 
 ## Citation
 Coming soon
