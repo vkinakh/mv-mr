@@ -12,7 +12,7 @@ from torchvision import transforms
 import torchmetrics
 import open_clip
 
-from src.data import dataset_labels, get_dataset
+from src.data import get_dataset
 from src.transform import ValTransform, DATASET_STATS
 from src.utils import get_config, get_device
 

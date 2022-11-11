@@ -5,6 +5,9 @@
 # archives
 *.tar
 
+# temporary files
+temp/
+
 # models
 models/
 *.pth

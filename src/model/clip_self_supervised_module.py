@@ -10,7 +10,7 @@ import open_clip
 
 import numpy as np
 
-from src.model import ResnetMultiProj, DeiTMultiProj, CaiTMultiProj
+from src.model import ResnetMultiProj
 from src.loss import DistanceCorrelation
 from src.data import DatasetSSL
 from src.transform import AugTransform, ValTransform
@@ -33,10 +33,6 @@ class CLIPSelfSupervisedModule(pl.LightningModule):
 
         if config['encoder_type'] == 'resnet':
             self._encoder = ResnetMultiProj(**params_enc)
-        elif config['encoder_type'] == 'deit':
-            self._encoder = DeiTMultiProj(**params_enc)
-        elif config['encoder_type'] == 'cait':
-            self._encoder = CaiTMultiProj(**params_enc)
         else:
             raise NotImplementedError(f"Encoder type {config['encoder_type']} not implemented")
 

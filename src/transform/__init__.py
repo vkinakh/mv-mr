@@ -1,1 +1,1 @@
-from .transform import AugTransform, ValTransform, DataAugmentationDINO, DATASET_STATS
+from .transform import AugTransform, ValTransform, DATASET_STATS
