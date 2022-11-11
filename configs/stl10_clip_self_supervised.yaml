@@ -23,20 +23,13 @@ dataset:                      # dataset parameters
   path:                       # path to dataset (leave empty)
   aug_policy: custom     # augmentation policy. Choices: autoaugment, randaugment, custom
 
-scatnet:                      # scatnet parameters
-  J: 2                        # number of scales
-  shape:                      # shape of the input image
-    - 96                      # height
-    - 96                      # width
-  L: 8                        # number of rotations (filters per scale)
-
 encoder_type: resnet          # choices: resnet, deit
 encoder:                      # encoder parameters
   out_dim: 8192-8192-8192     # number of neurons in the projection layer
   small_kernel: True          # whether to use small kernels. Small kernels are used for STL10 dataset
 
-hog:                          # histogram of oriented gradients parameters
-  nbins: 24                   # number of bins
-  pool: 8                     # pooling size
+clip:
+  model_name: ViT-B-16
+  pretrained: laion400m_e32
 
-comment: stl10_self_supervised_scale_z
+comment: stl10_clip_self_supervised_scale_z_VIT-B-16

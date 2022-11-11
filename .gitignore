@@ -6,7 +6,7 @@
 *.tar
 
 # temporary files
-temp/
+temp/*
 
 # models
 models/

@@ -1,5 +1,5 @@
 batch_size: 256                # batch size for training
-epochs: 10                     # number of epochs to train for
+epochs: 100                    # number of epochs to train for
 warmup_epochs: 10              # number of warmup epochs (without learning rate decay)
 log_every: 100                 # frequency of logging (steps)
 eval_every: 1                  # frequency of evaluating on val set (epochs)
@@ -20,6 +20,7 @@ dataset:                       # dataset parameters
   n_classes: 1000              # number of classes
   size: 224                    # image size
   path: <>                     # path to the ImageNet folder. It should contain folders 'train' and 'val'
+  aug_policy: custom           # augmentation policy. Choices: autoaugment, randaugment, custom
 
 scatnet:                       # scatnet parameters
   J: 2                         # number of scales
@@ -35,4 +36,4 @@ hog:                           # histogram of oriented gradients parameters
   nbins: 24                    # number of bins
   pool: 8                      # pooling size
 
-comment: imagenet_self_supervised_scale_z_ffcv
+comment: imagenet_self_supervised_scale_z_8192-8192-8192
