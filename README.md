@@ -16,18 +16,17 @@ This repo contains official Pytorch implementations of the paper:
 
 ## Introduction
 
-We present a new self-supervised learning method **MV-MR**, which is based on the maximization of several dependency
-measures between two embeddings obtained from views with and without augmentations and multiple representations
-extracted from a non-augmented view. We use an upper bound on mutual information for the estimation of dependencies
-between the embeddings of the same dimensions along with distance covariance that in addition handles the dependence
-estimation for the representations of different dimensions.
-In contrast to the state-of-the-art self-supervising techniques, no contrastive learning with negative pairs, 
-clustering, stop gradients, regularization of independence between the embedding dimensions or constraints on 
-covariance matrices of embeddings, etc. are used.  MV-MR provides the state-of-the-art performance on several 
-datasets such as STL10, ImageNet50, and comparable results for ImageNet-1K. MV-MR is a generic framework allowing 
-for flexibly incorporating various constraints onto the structure of the embedding space via the usage of 
-hand-crafted image multi-representations as regularizers. These regularizers maximize the dependence between these 
-multi-representations and the targeted embedding.
+We present a new method of self-supervised learning and  knowledge distillation based on the multi-views and multi-
+representations (MV-MR). The MV-MR is based on the maximization of dependence between learnable embeddings 
+from augmented and non-augmented views, jointly with the maximization of dependence between learnable embeddings
+from augmented view and multiple non-learnable representations from non-augmented view. We show that the 
+proposed method can be used for efficient self-supervised classification and model-agnostic knowledge distillation. 
+Unlike other self-supervised techniques, our approach does not use any contrastive learning, clustering, or stop 
+gradients. MV-MR is a generic framework allowing the incorporation of constraints on the learnable embeddings via the
+usage of image multi-representations as regularizers. Along this line, knowledge distillation is considered a particular
+case of such a regularization. MV-MR provides the state-of-the-art performance on the STL10 and ImageNet-1K 
+datasets among non-contrastive and clustering-free methods. We show that a lower complexity ResNet50 model pretrained using proposed knowledge distillation based on
+the CLIP ViT model achieves state-of-the-art performance on STL10 linear evaluation
 
 ## Installation
 
