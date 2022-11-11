@@ -5,30 +5,29 @@ channels:
   - conda-forge
 dependencies:
   - cudatoolkit=11.3.1=ha36c431_10
-  - cupy=10.2.0=py39hc3c280e_0
-  - faiss=1.7.2=py39cuda112he3b9038_0_cuda
-  - faiss-gpu=1.7.2=h788eb59_0
   - kornia=0.6.3=pyhd8ed1ab_0
   - numba=0.55.1=py39h56b8d98_0
   - numpy=1.21.5=py39haac66dc_0
   - opencv=4.5.5=py39hf3d152e_3
   - pillow=9.0.1=py39hae2aec6_2
   - pip=22.0.4=pyhd8ed1ab_0
-  - pytorch=1.11.0=py3.9_cuda11.3_cudnn8.2.0_0
-  - torchvision=0.12.0=py39_cu113
-  - wheel=0.37.1=pyhd8ed1ab_0
+  - python=3.9.7=hb7a2778_3_cpython
   - pip:
     - einops==0.4.1
-    - ffcv==0.0.3
     - kymatio==0.2.1
     - matplotlib==3.5.1
+    - open-clip-torch==2.0.2
     - pandas==1.4.1
+    - protobuf==3.20.*
     - pytorch-lightning==1.5.10
     - pyyaml==6.0
     - scikit-learn==1.0.2
     - scipy==1.8.0
     - sklearn==0.0
     - tensorboard==2.8.0
+    - timm==0.6.11
+    - torch==1.12.0
     - torch-dct==0.1.5
     - torchmetrics==0.7.2
+    - torchvision==0.13.0
     - tqdm==4.63.0
