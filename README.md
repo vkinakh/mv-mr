@@ -1,4 +1,5 @@
 ![Python 3.9](https://img.shields.io/badge/python-3.9-green.svg)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/mv-mr-multi-views-and-multi-representations/self-supervised-learning-on-stl-10)](https://paperswithcode.com/sota/self-supervised-learning-on-stl-10?p=mv-mr-multi-views-and-multi-representations)
 
 # MV-MR: Bridging multi-views and multi-representations for self-supervised learning based on dependence maximization
 
