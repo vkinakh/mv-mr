@@ -71,6 +71,10 @@ def get_dataset(dataset: str,
         subset_file = f'./data/imagenet_subsets/imagenet_{n_classes}.txt'
         split = 'train' if train else 'val'
         return ImageNetSubset(subset_file, path, split, transform)
+    elif dataset == 'cifar100':
+        return datasets.CIFAR100('./data', train=train, download=download, transform=transform)
+    elif dataset == 'cifar10':
+        return datasets.CIFAR10('./data', train=train, download=download, transform=transform)
     else:
         raise ValueError('Unsupported dataset')
 
