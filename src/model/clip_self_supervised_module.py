@@ -14,7 +14,6 @@ from src.model import ResnetMultiProj
 from src.loss import DistanceCorrelation
 from src.data import DatasetSSL
 from src.transform import AugTransform, ValTransform
-from src.utils import get_params_groups
 
 
 np.random.seed(0)
@@ -24,6 +23,8 @@ torch.backends.cudnn.benchmark = True
 
 
 class CLIPSelfSupervisedModule(pl.LightningModule):
+
+    """CLIP Self-Supervised Module"""
 
     def __init__(self, config: Dict):
         super().__init__()
@@ -97,7 +98,6 @@ class CLIPSelfSupervisedModule(pl.LightningModule):
         return dl
 
     def configure_optimizers(self):
-
         lr = self.hparams.lr
         wd = eval(self.config['wd'])
 
@@ -106,12 +106,7 @@ class CLIPSelfSupervisedModule(pl.LightningModule):
         if opt_type == 'adam':
             opt = optim.Adam(self._encoder.parameters(), lr=lr, weight_decay=wd)
         elif opt_type == 'adamw':
-
-            if self.config['encoder_type'] in ['deit', 'cait']:
-                params = get_params_groups(self._encoder)
-            else:
-                params = self._encoder.parameters()
-            opt = optim.AdamW(params, lr=lr, weight_decay=wd)
+            opt = optim.AdamW(self._encoder.parameters(), lr=lr, weight_decay=wd)
         sched = optim.lr_scheduler.CosineAnnealingLR(opt, T_max=len(self.train_dataloader()))
         return [opt], [sched]
 
