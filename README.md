@@ -2,10 +2,12 @@
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/mv-mr-multi-views-and-multi-representations/self-supervised-learning-on-stl-10)](https://paperswithcode.com/sota/self-supervised-learning-on-stl-10?p=mv-mr-multi-views-and-multi-representations)
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/mv-mr-multi-views-and-multi-representations/unsupervised-image-classification-on-stl-10)](https://paperswithcode.com/sota/unsupervised-image-classification-on-stl-10?p=mv-mr-multi-views-and-multi-representations)
 
-# MV-MR: Bridging multi-views and multi-representations for self-supervised learning based on dependence maximization
+# MV-MR: multi-views and multi-representations for self-supervised learning and knowledge distillation
 
 This repo contains official Pytorch implementations of the paper:
-**Bridging multi-views and multi-representations for self-supervised learning based on dependence maximization**
+**MV-MR: multi-views and multi-representations for self-supervised learning and knowledge distillation**
+
+[Paper](https://arxiv.org/abs/2303.12130v1)
 
 
 # Contents
@@ -167,4 +169,11 @@ python evaluate_voc.py --config <path to VOC config> --ckpt <path to model train
 | STL10 | 95.6%| Coming soon |
 
 ## Citation
-Coming soon
+```
+@article{kinakh2023mv,
+  title={MV-MR: multi-views and multi-representations for self-supervised learning and knowledge distillation},
+  author={Kinakh, Vitaliy and Drozdova, Mariia and Voloshynovskiy, Slava},
+  journal={arXiv preprint arXiv:2303.12130},
+  year={2023}
+}
+```
