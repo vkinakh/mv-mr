@@ -8,7 +8,7 @@ from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 
 from src.utils import get_config
-from src.model import CLIPSelfSupervisedModule, OnlineFineTuner
+from src.model import CLIPSupervisedModule
 
 
 def main(args) -> None:
@@ -26,7 +26,7 @@ def main(args) -> None:
     epochs = config['epochs']
     eval_every = config['eval_every']
 
-    module = CLIPSelfSupervisedModule(config)
+    module = CLIPSupervisedModule(config)
 
     # configure callbacks
     callback_lr = LearningRateMonitor('step')
@@ -34,19 +34,13 @@ def main(args) -> None:
                                          mode='max')
     callback_last_ckpt = ModelCheckpoint(every_n_epochs=1, filename='last_{epoch}_{step}')
 
-    encoder_dim = module.num_features
-    n_classes = config['dataset']['n_classes']
-    callback_finetuner = OnlineFineTuner(encoder_dim, n_classes)
-
     # checkpoint
     path_checkpoint = config['fine_tune_from']
 
     trainer = pl.Trainer(logger=logger,
                          callbacks=[callback_lr,
                                     callback_best_ckpt,
-                                    callback_last_ckpt,
-                                    callback_finetuner
-                                    ],
+                                    callback_last_ckpt],
                          gpus=-1, auto_select_gpus=True,
                          auto_scale_batch_size=auto_bs,
                          max_epochs=epochs,
@@ -61,8 +55,7 @@ def main(args) -> None:
         lr = lr_finder.suggestion()
         print(f'LR: {lr}')
         module.hparams.lr = lr
-        # save suggested lr
-        config['lr_suggested'] = lr
+        # save suggested lr to config
 
     trainer.tune(module)
 
@@ -79,8 +72,9 @@ def main(args) -> None:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', '-c', type=str, help='Path to config file')
+    parser.add_argument('--config', type=str, required=True)
     parser.add_argument('--auto_bs', action='store_true')
     parser.add_argument('--auto_lr', action='store_true')
     args = parser.parse_args()
+
     main(args)

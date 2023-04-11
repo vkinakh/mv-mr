@@ -4,6 +4,7 @@
 
 # archives
 *.tar
+*.tar.gz
 
 # temporary files
 temp/*

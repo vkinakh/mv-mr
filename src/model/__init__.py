@@ -10,3 +10,4 @@ from .self_supervised_module import SelfSupervisedModule, OnlineFineTuner
 from .semi_supervised_module import SemiSupervisedModule
 from .voc_linear_eval_module import VocLinearEvalModule
 from .clip_self_supervised_module import CLIPSelfSupervisedModule
+from .clip_supervised_module import CLIPSupervisedModule
