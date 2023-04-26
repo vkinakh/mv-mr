@@ -1,6 +1,6 @@
-batch_size: 450
-epochs: 100
-warmup_epochs: 10
+batch_size: 64
+epochs: 250
+# warmup_epochs: 10
 log_every: 100
 eval_every: 1
 n_workers: 16
@@ -12,16 +12,16 @@ fine_tune_from:
 
 std_margin: 1
 
-optimizer: adamw
-wd: 1e-6
-lr: 1e-4
+optimizer: sgd
+wd: 5e-4
+lr: 5e-2
 
 dataset:
   name: cifar100
   n_classes: 100
   size: 32
   path:
-  aug_policy: custom
+  aug_policy: cifar
 
 encoder_type: resnet
 encoder:
@@ -32,4 +32,4 @@ clip:
   model_name: ViT-B-16
   pretrained: laion400m_e32
 
-comment: cifar100_clip_supervised_VIT-B-16
+comment: cifar100_clip_supervised_VIT-B-16_sgd_pretraining_small_kernel_bs_64_lr_5e-2_fp16

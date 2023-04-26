@@ -1,6 +1,3 @@
-from PIL import ImageFilter, ImageOps, Image
-import random
-
 import torch
 from torchvision import transforms
 
@@ -58,6 +55,11 @@ class AugTransform:
                 transforms.RandomResizedCrop(size=size),
                 transforms.AutoAugment()
             ]
+        elif policy == 'cifar':
+            trans = [
+                transforms.RandomCrop(32, padding=4),
+                transforms.RandomHorizontalFlip(),
+            ]
         else:
             raise ValueError('Incorrect policy type')
         trans.extend([transforms.ToTensor(), transforms.Normalize(mean=stats['mean'], std=stats['std'])])
@@ -83,7 +85,7 @@ class ValTransform:
             ])
         else:  # STL10, CIFAR
             self._augmentations = transforms.Compose([
-                transforms.Resize(size=size),
+                # transforms.Resize(size=size),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=stats['mean'], std=stats['std'])
             ])
