@@ -13,7 +13,7 @@ import pytorch_lightning as pl
 import open_clip
 
 from src.model import ResnetMultiProj
-from src.model import CosineWarmupScheduler
+from src.model import CosineAnnealingWarmupRestarts
 from src.loss import DistanceCorrelation, DistillKL
 from src.data import DatasetSSL
 from src.transform import AugTransform, ValTransform
@@ -161,7 +161,13 @@ class CLIPSupervisedModule(pl.LightningModule):
             warmup_epochs = self.config['warmup_epochs']
             warmup_steps = warmup_epochs * len(self.train_dataloader())
             total_steps = epochs * len(self.train_dataloader())
-            sched = CosineWarmupScheduler(opt, warmup_steps=warmup_steps, total_steps=total_steps, eta_min=1e-6)
+            scheduler = CosineAnnealingWarmupRestarts(opt, total_steps, max_lr=lr, min_lr=1e-6, warmup_steps=warmup_steps)
+
+            sched = {
+                'scheduler': scheduler,
+                'interval': 'step',  # The scheduler will be updated per step
+                'frequency': 1,
+            }
 
         return [opt], [sched]
 
@@ -229,11 +235,6 @@ class CLIPSupervisedModule(pl.LightningModule):
             f'{stage}/acc_aug': acc_aug,
         }
         self.log_dict(res_dict)
-
-        # manual lr scheduling
-        # if self.current_epoch >= self.config['warmup_epochs']:
-        #     sch = self.lr_schedulers()
-        #     sch.step()
         return loss
 
     def training_step(self, batch, batch_idx: int) -> torch.Tensor:

@@ -1,0 +1,35 @@
+batch_size: 64
+epochs: 100
+warmup_epochs: 10
+log_every: 100
+eval_every: 1
+n_workers: 16
+fp16: True
+accumulate_grad_batches: 1
+normalize_z: False
+
+fine_tune_from:
+
+std_margin: 1
+
+optimizer: adamw
+wd: 1e-6
+lr: 1e-4
+
+dataset:
+  name: imagenet
+  n_classes: 1000
+  size: 224
+  path: /home/kinakh/Datasets/imagenet
+  aug_policy: custom
+
+encoder_type: resnet
+encoder:
+  out_dim:
+  small_kernel: False
+
+clip:
+  model_name: ViT-B-16
+  pretrained: laion400m_e32
+
+comment: imagenet_clip_supervised_VIT-B-16_adamw
