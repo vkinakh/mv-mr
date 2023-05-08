@@ -1,6 +1,5 @@
-batch_size: 64
-epochs: 250
-# warmup_epochs: 10
+batch_size: 256
+epochs: 1000
 log_every: 100
 eval_every: 1
 n_workers: 16
@@ -15,6 +14,10 @@ std_margin: 1
 optimizer: sgd
 wd: 5e-4
 lr: 5e-2
+
+scheduler: warmup_cosine
+warmup_epochs: 50
+#milestones: [400, 600, 800]
 
 dataset:
   name: cifar100
@@ -32,4 +35,6 @@ clip:
   model_name: ViT-B-16
   pretrained: laion400m_e32
 
-comment: cifar100_clip_supervised_VIT-B-16_sgd_pretraining_small_kernel_bs_64_lr_5e-2_fp16
+teacher_path: ./lightning_logs/cifar100_vitb16_2_layer_classifier_sgd_cifar_aug/clip_ViT-B-16_2_layer_classifier_best_175.pth
+
+comment: cifar100_clip_supervised_VIT-B-16_sgd_small_kernel_d_corr_distil_classifier_clip_orig_label_dcorr_warmupcosine_bs_256

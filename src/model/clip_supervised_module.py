@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Callable
 
 import numpy as np
 
@@ -7,12 +7,14 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
+from torchvision import transforms
 from torchmetrics.functional import accuracy
 import pytorch_lightning as pl
 import open_clip
 
 from src.model import ResnetMultiProj
-from src.loss import DistanceCorrelation
+from src.model import CosineWarmupScheduler
+from src.loss import DistanceCorrelation, DistillKL
 from src.data import DatasetSSL
 from src.transform import AugTransform, ValTransform
 
@@ -47,8 +49,24 @@ class CLIPSupervisedModule(pl.LightningModule):
         self.hparams.lr = eval(config['lr'])
 
         # CLIP feature extractor
-        self.clip = open_clip.create_model(**config['clip'], device='cuda', jit=False)
+        self.clip = open_clip.create_model(**config['clip'], device='cuda', jit=False).visual
         self.clip.eval()
+        self.clip.requires_grad_(False)
+
+        self._teacher_cls = nn.Sequential(
+            nn.Linear(self.clip.output_dim, 512),
+            nn.ReLU(),
+            nn.Linear(512, config['dataset']['n_classes'])
+        )
+        # load teacher weights
+        self._teacher_cls.load_state_dict(torch.load(config['teacher_path']))
+        self._teacher_cls.eval()
+        self._teacher_cls.requires_grad_(False)
+
+        self._loss_kl = DistillKL(4)
+
+        # transform
+        self.transform = self.get_transform()
 
     @property
     def config(self) -> Dict:
@@ -61,6 +79,22 @@ class CLIPSupervisedModule(pl.LightningModule):
     @property
     def num_features(self) -> int:
         return self._encoder.num_features
+
+    def get_transform(self) -> Callable:
+
+        size = self.config['dataset']['size']
+        blur_kernel_size = 2 * int(.05 * size) + 1
+        color = transforms.ColorJitter(0.8, 0.8, 0.8, 0.2)
+
+        # transform
+        transform = transforms.Compose([
+            transforms.RandomResizedCrop(size=size),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomApply([color], p=0.8),
+            transforms.RandomGrayscale(p=0.2),
+            transforms.GaussianBlur(kernel_size=blur_kernel_size),
+        ])
+        return transform
 
     def train_dataloader(self) -> DataLoader:
         bs = self.hparams.batch_size
@@ -112,7 +146,23 @@ class CLIPSupervisedModule(pl.LightningModule):
             opt = optim.Adam(params, lr=lr, weight_decay=wd)
         elif opt_type == 'adamw':
             opt = optim.AdamW(params, lr=lr, weight_decay=wd)
-        sched = optim.lr_scheduler.CosineAnnealingLR(opt, T_max=len(self.train_dataloader()))
+        elif opt_type == 'sgd':
+            opt = optim.SGD(params, lr=lr, weight_decay=wd, momentum=0.9)
+
+        sched_type = self.config['scheduler']
+        if sched_type == 'cosine':
+            epochs = self.config['epochs']
+            sched = optim.lr_scheduler.CosineAnnealingLR(opt, T_max=epochs * len(self.train_dataloader()))
+        elif sched_type == 'multistep':
+            steps = self.config['milestones']
+            sched = optim.lr_scheduler.MultiStepLR(opt, milestones=steps, gamma=0.1)
+        if sched_type == 'warmup_cosine':
+            epochs = self.config['epochs']
+            warmup_epochs = self.config['warmup_epochs']
+            warmup_steps = warmup_epochs * len(self.train_dataloader())
+            total_steps = epochs * len(self.train_dataloader())
+            sched = CosineWarmupScheduler(opt, warmup_steps=warmup_steps, total_steps=total_steps, eta_min=1e-6)
+
         return [opt], [sched]
 
     def optimizer_zero_grad(self, epoch, batch_idx, optimizer, optimizer_idx):
@@ -125,56 +175,65 @@ class CLIPSupervisedModule(pl.LightningModule):
         z_orig, _ = self._encoder(im_orig)
 
         logits = self._classifier(z)
-        logits_orig = self._classifier(z_orig)
+        with torch.no_grad():
+            logits_orig = self._classifier(z_orig)
 
         if self.config['normalize_z']:
             z = F.normalize(z, dim=1)
-            z_orig = F.normalize(z_orig, dim=1)
+            # z_orig = F.normalize(z_orig, dim=1)
 
         # trick for FP16 training, scaling doesn't affect dist corr
         z_scaled = z / 32
-        z_orig_scaled = z_orig / 32
+        # z_orig_scaled = z_orig / 32
 
         # MSE Loss
-        loss_mse = F.mse_loss(z, z_orig)
+        # loss_mse = F.mse_loss(z, z_orig)
+
         # STD loss
-        std_z = z.std(dim=0)
-        std_z_orig = z_orig.std(dim=0)
-        loss_std = torch.relu(self._margin_std - std_z).mean() + torch.relu(self._margin_std - std_z_orig).mean()
+        # std_z = z.std(dim=0)
+        # std_z_orig = z_orig.std(dim=0)
+        # loss_std = torch.relu(self._margin_std - std_z).mean() + torch.relu(self._margin_std - std_z_orig).mean()
+
         # distance correlation on z
-        loss_dc_zz = 1 - self._loss_dc(z_scaled, z_orig_scaled)
+        # loss_dc_zz = 1 - self._loss_dc(z_scaled, z_orig_scaled)
 
         # CLIP loss
         with torch.no_grad():
             im_orig = F.interpolate(im_orig, size=(224, 224), mode='bilinear', align_corners=False)
-            clip_z_orig = self.clip.encode_image(im_orig) / 32
+            clip_z_orig = self.clip(im_orig)
+            logits_clip = self._teacher_cls(clip_z_orig)
 
-        loss_dc_clip = 1 - self._loss_dc(z_scaled, clip_z_orig)
+        loss_dc_clip = (1 - self._loss_dc(z_scaled, clip_z_orig))
 
         # supervised losses
         loss_ce = self._loss_ce(logits, label)
-        loss_ce_orig = self._loss_ce(logits_orig, label)
+        loss_kl = self._loss_kl(logits, logits_clip)
+        # loss_ce_orig = self._loss_ce(logits_orig, label)
 
-        loss = loss_mse + loss_std + loss_dc_zz + loss_dc_clip + loss_ce + loss_ce_orig
+        loss = loss_ce + loss_kl + 10 * loss_dc_clip
 
         # compute accuracy
-        acc = accuracy(logits, label)
+        acc_aug = accuracy(logits, label)
+        acc_orig = accuracy(logits_orig, label)
 
         res_dict = {
             f'{stage}/loss': loss,
-            f'{stage}/MSE': loss_mse,
-            f'{stage}/STD': loss_std,
-            f'{stage}/DC_zz': loss_dc_zz,
+            # f'{stage}/MSE': loss_mse,
+            # f'{stage}/STD': loss_std,
+            # f'{stage}/DC_zz': loss_dc_zz,
             f'{stage}/DC_clip': loss_dc_clip,
             f'{stage}/CE': loss_ce,
-            f'{stage}/CE_orig': loss_ce_orig,
-            f'{stage}/acc': acc,
+            f'{stage}/KL': loss_kl,
+            # f'{stage}/CE_orig': loss_ce_orig,
+            f'{stage}/acc': acc_orig,
+            f'{stage}/acc_aug': acc_aug,
         }
         self.log_dict(res_dict)
+
         # manual lr scheduling
-        if self.current_epoch >= self.config['warmup_epochs']:
-            sch = self.lr_schedulers()
-            sch.step()
+        # if self.current_epoch >= self.config['warmup_epochs']:
+        #     sch = self.lr_schedulers()
+        #     sch.step()
         return loss
 
     def training_step(self, batch, batch_idx: int) -> torch.Tensor:
