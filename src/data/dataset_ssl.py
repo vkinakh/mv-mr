@@ -5,6 +5,7 @@ from torch.utils.data import Dataset
 from torchvision import datasets
 
 from src.data import ImageNetSubset
+from src.data import CIFAR20
 
 
 def get_imagenet_labels():
@@ -75,6 +76,8 @@ def get_dataset(dataset: str,
         return datasets.CIFAR100('./data', train=train, download=download, transform=transform)
     elif dataset == 'cifar10':
         return datasets.CIFAR10('./data', train=train, download=download, transform=transform)
+    elif dataset == 'cifar20':
+        return CIFAR20('./data', train=train, download=download, transform=transform)
     else:
         raise ValueError('Unsupported dataset')
 
