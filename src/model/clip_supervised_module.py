@@ -163,12 +163,13 @@ class CLIPSupervisedModule(pl.LightningModule):
         elif sched_type == 'multistep':
             steps = self.config['milestones']
             sched = optim.lr_scheduler.MultiStepLR(opt, milestones=steps, gamma=0.1)
-        if sched_type == 'warmup_cosine':
+        elif sched_type == 'warmup_cosine':
             epochs = self.config['epochs']
             warmup_epochs = self.config['warmup_epochs']
             warmup_steps = warmup_epochs * len(self.train_dataloader())
             total_steps = epochs * len(self.train_dataloader())
-            scheduler = CosineAnnealingWarmupRestarts(opt, total_steps, max_lr=lr, min_lr=1e-6, warmup_steps=warmup_steps)
+            scheduler = CosineAnnealingWarmupRestarts(opt, total_steps, max_lr=lr, min_lr=1e-6,
+                                                      warmup_steps=warmup_steps)
 
             sched = {
                 'scheduler': scheduler,

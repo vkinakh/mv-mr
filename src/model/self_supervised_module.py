@@ -16,6 +16,7 @@ from einops import rearrange
 import torch_dct as dct
 
 from src.model import ResnetMultiProj, HOGLayer
+from src.model import CosineAnnealingWarmupRestarts
 from src.loss import DistanceCorrelation
 from src.data import DatasetSSL
 from src.transform import AugTransform, ValTransform
@@ -133,7 +134,43 @@ class SelfSupervisedModule(pl.LightningModule):
             opt = optim.Adam(self._encoder.parameters(), lr=lr, weight_decay=wd)
         elif opt_type == 'adamw':
             opt = optim.AdamW(self._encoder.parameters(), lr=lr, weight_decay=wd)
-        sched = optim.lr_scheduler.CosineAnnealingLR(opt, T_max=len(self.train_dataloader()))
+        elif opt_type == 'sgd':
+            opt = optim.SGD(self._encoder.parameters(), lr=lr, weight_decay=wd, momentum=0.9)
+
+        sched_type = self.config['scheduler']
+        if sched_type == 'cosine':
+            epochs = self.config['epochs']
+            scheduler = optim.lr_scheduler.CosineAnnealingLR(opt, T_max=epochs * len(self.train_dataloader()),
+                                                             eta_min=1e-6)
+
+            sched = {
+                'scheduler': scheduler,
+                'interval': 'step',  # The scheduler will be updated per step
+                'frequency': 1,
+            }
+        elif sched_type == 'multistep':
+            steps = self.config['milestones']
+            scheduler = optim.lr_scheduler.MultiStepLR(opt, milestones=steps, gamma=0.1)
+
+            sched = {
+                'scheduler': scheduler,
+                'interval': 'epoch',  # The scheduler will be updated per step
+                'frequency': 1,
+            }
+        elif sched_type == 'warmup_cosine':
+            epochs = self.config['epochs']
+            warmup_epochs = self.config['warmup_epochs']
+            warmup_steps = warmup_epochs * len(self.train_dataloader())
+            total_steps = epochs * len(self.train_dataloader())
+            scheduler = CosineAnnealingWarmupRestarts(opt, total_steps, max_lr=lr, min_lr=1e-6,
+                                                      warmup_steps=warmup_steps)
+
+            sched = {
+                'scheduler': scheduler,
+                'interval': 'step',  # The scheduler will be updated per step
+                'frequency': 1,
+            }
+
         return [opt], [sched]
 
     def optimizer_zero_grad(self, epoch, batch_idx, optimizer, optimizer_idx):
@@ -227,9 +264,9 @@ class SelfSupervisedModule(pl.LightningModule):
         self.log_dict(res_dict)
 
         # manual lr scheduling
-        if self.current_epoch >= self.config['warmup_epochs']:
-            sch = self.lr_schedulers()
-            sch.step()
+        # if self.current_epoch >= self.config['warmup_epochs']:
+        #     sch = self.lr_schedulers()
+        #     sch.step()
         return loss
 
     def training_step(self, batch, batch_idx: int) -> torch.Tensor:
