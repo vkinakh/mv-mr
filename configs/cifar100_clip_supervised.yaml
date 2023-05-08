@@ -1,4 +1,4 @@
-batch_size: 256
+batch_size: 512
 epochs: 1000
 log_every: 100
 eval_every: 1
@@ -11,12 +11,12 @@ fine_tune_from:
 
 std_margin: 1
 
-optimizer: sgd
+optimizer: adam
 wd: 5e-4
-lr: 5e-2
+lr: 1e-3
 
-scheduler: warmup_cosine
-warmup_epochs: 50
+scheduler: cosine
+#warmup_epochs: 50
 #milestones: [400, 600, 800]
 
 dataset:
@@ -37,4 +37,4 @@ clip:
 
 teacher_path: ./lightning_logs/cifar100_vitb16_2_layer_classifier_sgd_cifar_aug/clip_ViT-B-16_2_layer_classifier_best_175.pth
 
-comment: cifar100_clip_supervised_VIT-B-16_sgd_small_kernel_d_corr_distil_classifier_clip_orig_label_dcorr_warmupcosine_bs_256
+comment: cifar100_clip_supervised_VIT-B-16_adam_small_kernel_d_corr_distil_classifier_clip_orig_label_dcorr_cosine_bs_512

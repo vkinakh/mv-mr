@@ -152,7 +152,14 @@ class CLIPSupervisedModule(pl.LightningModule):
         sched_type = self.config['scheduler']
         if sched_type == 'cosine':
             epochs = self.config['epochs']
-            sched = optim.lr_scheduler.CosineAnnealingLR(opt, T_max=epochs * len(self.train_dataloader()))
+            scheduler = optim.lr_scheduler.CosineAnnealingLR(opt, T_max=epochs * len(self.train_dataloader()),
+                                                             eta_min=1e-6)
+            sched = {
+                'scheduler': scheduler,
+                'interval': 'step',  # The scheduler will be updated per step
+                'frequency': 1,
+            }
+
         elif sched_type == 'multistep':
             steps = self.config['milestones']
             sched = optim.lr_scheduler.MultiStepLR(opt, milestones=steps, gamma=0.1)
