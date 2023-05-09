@@ -1,0 +1,43 @@
+batch_size: 256
+epochs: 1000
+log_every: 100
+eval_every: 1
+n_workers: 16
+fp16: True
+accumulate_grad_batches: 1
+normalize_z: False
+
+fine_tune_from:
+
+std_margin: 1
+
+optimizer: adam
+wd: 1e-6
+lr: 1e-4
+
+scheduler: cosine
+
+dataset:
+  name: cifar20
+  size: 32
+  n_classes: 20
+  path:
+  aug_policy: custom
+
+scatnet:                      # scatnet parameters
+  J: 2                        # number of scales
+  shape:                      # shape of the input image
+    - 32                      # height
+    - 32                      # width
+  L: 8                        # number of rotations (filters per scale)
+
+encoder_type: resnet          # choices: resnet, deit
+encoder:                      # encoder parameters
+  out_dim: 8192-8192-8192     # number of neurons in the projection layer
+  small_kernel: True          # whether to use small kernels. Small kernels are used for CIFAR20 dataset
+
+hog:                          # histogram of oriented gradients parameters
+  nbins: 24                   # number of bins
+  pool: 8                     # pooling size
+
+comment: cifar20_self_supervised_scale_z_adam_1e-4_cosine_bs_256

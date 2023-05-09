@@ -40,6 +40,7 @@ def main(args) -> None:
 
     # checkpoint
     path_checkpoint = config['fine_tune_from']
+    grad_clip_val = config['gradient_clip_val'] if 'gradient_clip_val' in config else None
 
     trainer = pl.Trainer(logger=logger,
                          callbacks=[callback_lr,
@@ -55,7 +56,7 @@ def main(args) -> None:
                          log_every_n_steps=config['log_every'],
                          precision=precision,
                          accumulate_grad_batches=accumulate_grad_batches,
-                         gradient_clip_val=config['gradient_clip_val'])
+                         gradient_clip_val=grad_clip_val)
 
     if auto_lr:
         lr_finder = trainer.tuner.lr_find(module, min_lr=1e-5, max_lr=1e-1,)
