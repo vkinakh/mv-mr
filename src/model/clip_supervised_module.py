@@ -162,7 +162,8 @@ class CLIPSupervisedModule(pl.LightningModule):
 
         elif sched_type == 'multistep':
             steps = self.config['milestones']
-            sched = optim.lr_scheduler.MultiStepLR(opt, milestones=steps, gamma=0.1)
+            gamma = self.config['gamma'] if 'gamma' in self.config else 0.1
+            sched = optim.lr_scheduler.MultiStepLR(opt, milestones=steps, gamma=gamma)
         elif sched_type == 'warmup_cosine':
             epochs = self.config['epochs']
             warmup_epochs = self.config['warmup_epochs']
@@ -252,4 +253,4 @@ class CLIPSupervisedModule(pl.LightningModule):
         return self.step(batch, batch_idx, stage='val')
 
     def forward(self, x: torch.Tensor):
-        return self._encoder(x)
+        return self._classifier(self._encoder(x)[0])

@@ -1,4 +1,5 @@
 from .resnet import ResnetMultiProj
+from .resnet import resnet8x4
 from .embedding_extractor import EmbeddingExtractor
 from .linear_evaluator import LinearEvaluator
 from .hog import HOGLayer
