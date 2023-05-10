@@ -44,8 +44,11 @@ class CLIPSelfSupervisedModule(pl.LightningModule):
         self.online_finetuner = nn.Linear(self._encoder.num_features, config['dataset']['n_classes'])
 
         # CLIP feature extractor
-        self.clip = open_clip.create_model(**config['clip'], device='cuda', jit=False)
+        self.clip = open_clip.create_model(**config['clip'], device='cuda', jit=False).visual
         self.clip.eval()
+
+        # freeze CLIP
+        self.clip.requires_grad_(False)
 
     @property
     def encoder(self):
@@ -140,7 +143,7 @@ class CLIPSelfSupervisedModule(pl.LightningModule):
         # CLIP loss
         with torch.no_grad():
             im_orig = F.interpolate(im_orig, size=(224, 224), mode='bilinear', align_corners=False)
-            clip_z_orig = self.clip.encode_image(im_orig) / 32
+            clip_z_orig = self.clip(im_orig) / 32
 
         loss_dc_clip = 1 - self._loss_dc(z_scaled, clip_z_orig)
         loss += loss_dc_clip
