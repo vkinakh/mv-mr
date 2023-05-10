@@ -1,5 +1,5 @@
-batch_size: 256
-epochs: 1000
+batch_size: 1024
+epochs: 16000
 log_every: 100
 eval_every: 1
 n_workers: 16
@@ -11,9 +11,9 @@ fine_tune_from:
 
 std_margin: 1
 
-optimizer: adam
+optimizer: sgd
 wd: 1e-6
-lr: 1e-4
+lr: 2e-4
 
 scheduler: cosine
 
@@ -22,7 +22,7 @@ dataset:
   size: 32
   n_classes: 20
   path:
-  aug_policy: custom
+  aug_policy: cifar20
 
 scatnet:                      # scatnet parameters
   J: 2                        # number of scales
@@ -40,4 +40,4 @@ hog:                          # histogram of oriented gradients parameters
   nbins: 24                   # number of bins
   pool: 8                     # pooling size
 
-comment: cifar20_self_supervised_scale_z_adam_1e-4_cosine_bs_256
+comment: cifar20_self_supervised_scale_z_adam_2e-4_cosine_bs_1024

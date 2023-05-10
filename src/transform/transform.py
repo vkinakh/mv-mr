@@ -60,6 +60,19 @@ class AugTransform:
                 transforms.RandomCrop(32, padding=4),
                 transforms.RandomHorizontalFlip(),
             ]
+        elif policy == 'cifar20':
+            trans = [
+                transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
+                transforms.RandomGrayscale(p=0.1),
+                transforms.RandomResizedCrop(
+                    size,
+                    scale=(0.2, 1.0),
+                    ratio=(0.75, 4 / 3),
+                    interpolation=3,
+                ),
+                transforms.RandomHorizontalFlip(),
+            ]
+
         else:
             raise ValueError('Incorrect policy type')
         trans.extend([transforms.ToTensor(), transforms.Normalize(mean=stats['mean'], std=stats['std'])])

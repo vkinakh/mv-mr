@@ -150,7 +150,8 @@ class SelfSupervisedModule(pl.LightningModule):
             }
         elif sched_type == 'multistep':
             steps = self.config['milestones']
-            scheduler = optim.lr_scheduler.MultiStepLR(opt, milestones=steps, gamma=0.1)
+            gamma = self.config['gamma'] if 'gamma' in self.config else 0.1
+            scheduler = optim.lr_scheduler.MultiStepLR(opt, milestones=steps, gamma=gamma)
 
             sched = {
                 'scheduler': scheduler,
