@@ -13,8 +13,8 @@ from src.transform import AugTransform, ValTransform
 
 def train_eval():
     config_clip = {
-        'model_name': 'ViT-B-16',
-        'pretrained': 'laion400m_e32'
+        'model_name': 'ViT-L-14',
+        'pretrained': 'laion2b_s32b_b82k'
     }
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -22,7 +22,7 @@ def train_eval():
     dataset_name = 'cifar100'
     n_classes = 100
     size = 32
-    batch_size = 512
+    batch_size = 256
     n_workers = 16
     n_epochs = 300
 
@@ -31,7 +31,7 @@ def train_eval():
     model_clip.requires_grad_(False)
 
     # create linear classifier
-    # classifier = nn.Linear(model_clip.output_dim, n_classes).to(device)
+    classifier = nn.Linear(model_clip.output_dim, n_classes).to(device)
 
     # create 2 layer classifier
     # classifier = nn.Sequential(
@@ -52,13 +52,13 @@ def train_eval():
     # ).to(device)
 
     # create 3 layer classifier
-    classifier = nn.Sequential(
-        nn.Linear(model_clip.output_dim, 512),
-        nn.ReLU(),
-        nn.Linear(512, 512),
-        nn.ReLU(),
-        nn.Linear(512, n_classes)
-    ).to(device)
+    # classifier = nn.Sequential(
+    #     nn.Linear(model_clip.output_dim, 512),
+    #     nn.ReLU(),
+    #     nn.Linear(512, 512),
+    #     nn.ReLU(),
+    #     nn.Linear(512, n_classes)
+    # ).to(device)
 
     # optimizer
     optimizer = optim.SGD(classifier.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
@@ -119,15 +119,15 @@ def train_eval():
         if acc > best_acc:
             print(f'Best model updated: {best_acc} -> {acc}')
             best_acc = acc
-            torch.save(classifier.state_dict(), f'clip_{config_clip["model_name"]}_3_layer_classifier_best_{epoch}.pth')
+            torch.save(classifier.state_dict(), f'clip_{config_clip["model_name"]}_linear_classifier_best_{epoch}.pth')
 
-    torch.save(classifier.state_dict(), f'clip_{config_clip["model_name"]}_3_layer_classifier_last.pth')
+    torch.save(classifier.state_dict(), f'clip_{config_clip["model_name"]}_linear_classifier_last.pth')
 
 
 def eval_classifier():
     config_clip = {
-        'model_name': 'ViT-B-16',
-        'pretrained': 'laion400m_e32'
+        'model_name': 'ViT-L-14',
+        'pretrained': 'laion2b_s32b_b82k'
     }
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -200,5 +200,5 @@ def eval_classifier():
 
 
 if __name__ == '__main__':
-    # train_eval()
-    eval_classifier()
+    train_eval()
+    # eval_classifier()

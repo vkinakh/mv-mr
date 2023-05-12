@@ -1,5 +1,5 @@
-batch_size: 1024
-epochs: 16000
+batch_size: 512
+epochs: 8000
 log_every: 100
 eval_every: 1
 n_workers: 16
@@ -11,7 +11,7 @@ fine_tune_from:
 
 std_margin: 1
 
-optimizer: sgd
+optimizer: adam
 wd: 1e-6
 lr: 2e-4
 
@@ -40,4 +40,4 @@ hog:                          # histogram of oriented gradients parameters
   nbins: 24                   # number of bins
   pool: 8                     # pooling size
 
-comment: cifar20_self_supervised_scale_z_adam_2e-4_cosine_bs_1024
+comment: cifar20_self_supervised_scale_z_adam_1e-4_cosine_bs_512

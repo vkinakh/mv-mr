@@ -77,6 +77,10 @@ class CLIPSupervisedModule(pl.LightningModule):
         return self._encoder
 
     @property
+    def classifier(self):
+        return self._classifier
+
+    @property
     def num_features(self) -> int:
         return self._encoder.num_features
 

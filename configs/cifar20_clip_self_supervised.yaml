@@ -1,0 +1,35 @@
+batch_size: 256
+epochs: 1000
+warmup_epochs: 10
+log_every: 100
+eval_every: 1
+n_workers: 16
+fp16: True
+accumulate_grad_batches: 1
+normalize_z: False
+
+fine_tune_from:
+
+std_margin: 1
+
+optimizer: adam
+wd: 1e-6
+lr: 1e-4
+
+dataset:
+  name: cifar20
+  n_classes: 20
+  size: 32
+  path:
+  aug_policy: cifar20
+
+encoder_type: resnet
+encoder:
+  out_dim: 8192-8192-8192
+  small_kernel: True
+
+clip:
+  model_name: ViT-B-16
+  pretrained: laion400m_e32
+
+comment: cifar20_clip_self_supervised_scale_z_VIT-B-16
