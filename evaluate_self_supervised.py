@@ -91,8 +91,6 @@ def evaluate_retrain(args):
 
             torch.save(finetuner.state_dict(), f'finetuner_{ds_name}_{size}.pth')
 
-        torch.save(finetuner.state_dict(), f'finetuner_epoch_{i}_{ds_name}_{size}.pth')
-
     print(f'Best epoch: {best_epoch}, Best acc: {best_acc}')
 
 
