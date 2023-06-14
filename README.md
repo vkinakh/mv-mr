@@ -147,6 +147,9 @@ To run multiclass classification evaluation on VOC07:
 python evaluate_voc.py --config <path to VOC config> --ckpt <path to model trained on VOC>
 ```
 
+## Convert pytorch-lightning weight to pytorch format
+See `scripts/` folder.
+
 ## Results
 
 ### Self-supervised models
