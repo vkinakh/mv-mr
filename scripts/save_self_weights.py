@@ -9,7 +9,13 @@ from src.model import SelfSupervisedModule
 from src.utils import get_config
 
 
-def save_encoder_weights(input_path):
+def save_weights(input_path: str) -> None:
+    """Saves weights from checkpoint to .pth file
+    Finds all .ckpt files in input_path and saves weights to .pth file in same directory
+
+    Args:
+        input_path: path to directory containing .ckpt files
+    """
 
     input_path = Path(input_path)
 
@@ -42,8 +48,8 @@ def save_encoder_weights(input_path):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--in_path', '-i', help='Path to checkpoint', required=True)
+    parser.add_argument('--in_path', '-i', help='Path to directory with checkpoints', required=True)
     args = parser.parse_args()
 
-    save_encoder_weights(args.in_path)
+    save_weights(args.in_path)
 
