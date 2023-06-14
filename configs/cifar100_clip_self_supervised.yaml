@@ -1,5 +1,6 @@
 batch_size: 256                 # batch size for training
-epochs: 500                     # number of epochs to train for
+epochs: 1000                    # number of epochs to train for
+warmup_epochs: 10               # number of warmup epochs (without learning rate decay)
 log_every: 100                  # frequency of logging (steps)
 eval_every: 1                   # frequency of evaluating on val set (epochs)
 n_workers: 16                   # number of workers for dataloader
@@ -11,13 +12,9 @@ fine_tune_from:                 # path to pre-trained model to fine-tune from
 
 std_margin: 1                   # margin for the std values in the loss
 
-optimizer: sgd                  # type of optimizer to use. Options: adam, adamw, sgd
-wd: 5e-4                        # weight decay
-lr: 5e-2                        # learning rate
-
-scheduler: multistep            # type of scheduler to use. Options: cosine, multistep, warmup_cosine
-milestones: [200, 300, 400]     # step numbers to decrease learning rate
-gamma: 0.1                      # factor to decrease learning rate
+optimizer: adam                 # type of optimizer to use. Options: adam, adamw
+wd: 1e-6                        # weight decay
+lr: 1e-4                        # learning rate
 
 dataset:                        # dataset parameters
   name: cifar100                # dataset name
@@ -28,14 +25,11 @@ dataset:                        # dataset parameters
 
 encoder_type: resnet            # choices: resnet
 encoder:                        # encoder parameters
-  backbone: resnet50            # backbone name
-  out_dim:                      # number of neurons in the projection layer
+  out_dim: 8192-8192-8192       # number of neurons in the projection layer
   small_kernel: True            # whether to use small kernels. Small kernels are used for CIFAR100 dataset
 
 clip:
   model_name: ViT-B-16          # clip model name
   pretrained: laion400m_e32     # clip model checkpoint
 
-teacher_path: <path to teacher> # path to teacher model
-
-comment: cifar100_clip_supervised_VIT-B-16
+comment: cifar100_clip_self_supervised_scale_z_VIT-B-16

@@ -1,5 +1,5 @@
 batch_size: 256                # batch size for training
-epochs: 100                    # number of epochs to train for
+epochs: 1000                   # number of epochs to train for
 warmup_epochs: 10              # number of warmup epochs (without learning rate decay)
 log_every: 100                 # frequency of logging (steps)
 eval_every: 1                  # frequency of evaluating on val set (epochs)
@@ -12,8 +12,10 @@ fine_tune_from:                # path to pre-trained model to fine-tune from
 
 std_margin: 1                  # margin for the std values in the loss
 
+optimizer: adam                # type of optimizer to use. Options: adam, adamw
 wd: 1e-6                       # weight decay
 lr: 1e-4                       # learning rate
+scheduler: warmup_cosine       # type of scheduler to use. Options: cosine, multistep, warmup_cosine
 
 dataset:                       # dataset parameters
   name: imagenet               # dataset name
@@ -36,4 +38,4 @@ hog:                           # histogram of oriented gradients parameters
   nbins: 24                    # number of bins
   pool: 8                      # pooling size
 
-comment: imagenet_self_supervised_scale_z_8192-8192-8192
+comment: imagenet_self_supervised_scale_z

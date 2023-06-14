@@ -1,4 +1,4 @@
-batch_size: 512               # batch size for training
+batch_size: 256               # batch size for training
 epochs: 100                   # number of epochs to train for
 warmup_epochs: 10             # number of warmup epochs (without learning rate decay)
 log_every: 100                # frequency of logging (steps)
@@ -28,8 +28,8 @@ encoder:                       # encoder parameters
   out_dim: 8192-8192-8192      # number of neurons in the projection layer
   small_kernel: False          # whether to use small kernels. Small kernels are used for STL10 dataset
 
-clip:
-  model_name: ViT-B-16
-  pretrained: laion400m_e32
+clip:                          # CLIP model parameters
+  model_name: ViT-B-16         # model backbone
+  pretrained: laion400m_e32    # pretrained tag
 
 comment: imagenet_clip_self_supervised_scale_z_VIT-B-16
