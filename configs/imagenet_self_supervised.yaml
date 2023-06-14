@@ -31,6 +31,7 @@ scatnet:                       # scatnet parameters
     - 224                      # width
   L: 8                         # number of rotations (filters per scale)
 
+encoder_type: resnet
 encoder:                       # encoder parameters
   out_dim: 8192-8192-8192      # number of neurons in the projection layer
 

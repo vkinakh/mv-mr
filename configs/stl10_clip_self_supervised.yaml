@@ -33,4 +33,3 @@ clip:                          # CLIP model parameters
   pretrained: laion400m_e32    # pretrained tag
 
 comment: stl10_clip_self_supervised_scale_z_VIT-B-16
-```

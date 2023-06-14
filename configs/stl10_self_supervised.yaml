@@ -15,6 +15,7 @@ std_margin: 1                 # margin for the std values in the loss
 optimizer: adam               # optimizer to use. Options: adam, adamw
 wd: 1e-6                      # weight decay
 lr: 1e-4                      # learning rate
+scheduler: warmup_cosine      # type of scheduler to use. Options: cosine, multistep, warmup_cosine
 
 dataset:                      # dataset parameters
   name: stl10                 # dataset name
