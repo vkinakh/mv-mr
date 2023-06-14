@@ -20,17 +20,17 @@ This repo contains official Pytorch implementations of the paper:
 
 ## Introduction
 
-We present a new method of self-supervised learning and  knowledge distillation based on the multi-views and multi-
-representations (MV-MR). The MV-MR is based on the maximization of dependence between learnable embeddings 
-from augmented and non-augmented views, jointly with the maximization of dependence between learnable embeddings
-from augmented view and multiple non-learnable representations from non-augmented view. We show that the 
-proposed method can be used for efficient self-supervised classification and model-agnostic knowledge distillation. 
-Unlike other self-supervised techniques, our approach does not use any contrastive learning, clustering, or stop 
-gradients. MV-MR is a generic framework allowing the incorporation of constraints on the learnable embeddings via the
-usage of image multi-representations as regularizers. Along this line, knowledge distillation is considered a particular
-case of such a regularization. MV-MR provides the state-of-the-art performance on the STL10 and ImageNet-1K 
-datasets among non-contrastive and clustering-free methods. We show that a lower complexity ResNet50 model pretrained using proposed knowledge distillation based on
-the CLIP ViT model achieves state-of-the-art performance on STL10 linear evaluation
+We present a new method of self-supervised learning and knowledge distillation based on the multi-views and 
+multi-representations (MV-MR). The MV-MR is based on the maximization of dependence between learnable embeddings from 
+augmented and non-augmented views, jointly with the maximization of dependence between learnable embeddings from 
+augmented view and multiple non-learnable representations from non-augmented view. We show that the proposed method 
+can be used for efficient self-supervised classification and model-agnostic knowledge distillation. 
+Unlike other self-supervised techniques, our approach does not use any contrastive learning, clustering, 
+or stop gradients. MV-MR is a generic framework allowing the incorporation of constraints on the learnable embeddings 
+via the usage of image multi-representations as regularizers. Along this line, knowledge distillation is considered as 
+a particular case of such a regularization. MV-MR provides the state-of-the-art performance on the STL10, CIFAR20 and 
+ImageNet-1K datasets among non-contrastive and clustering-free methods. We show that a lower complexity ResNet50 model 
+pretrained using proposed knowledge distillation based on the CLIP ViT model achieves state-of-the-art performance on STL10 linear evaluation
 
 ## Installation
 
@@ -150,23 +150,31 @@ python evaluate_voc.py --config <path to VOC config> --ckpt <path to model train
 ## Results
 
 ### Self-supervised models
-| Dataset     | Top-1 accuracy | Top-5 accuracy | Download link |
-|-------------|----------------|----------------|-------|
-| STL10       | 89.67%         | 99.46%         | Coming soon |
-| ImageNet-1K | 74.5%          | 92.1%          | Coming soon | 
+| Dataset     | Top-1 accuracy | Top-5 accuracy | Download link                                                                                    |
+|-------------|-------------|----------------|--------------------------------------------------------------------------------------------------|
+| STL10       | 89.67%      | 99.46%         | [Download](https://drive.google.com/drive/folders/1ljf0ZHDZSTsB-4aKTCrYIoyFS9gANSQR?usp=sharing) |
+| ImageNet-1K | 74.5%       | 92.1%          | [Download](https://drive.google.com/drive/folders/1Ck0MzmXsu--m8vzNRRD2oW3Qi9qDRYJr?usp=sharing) | 
+ | CIFAR20    | 73.2%       | 95.6%          | [Download](https://drive.google.com/drive/folders/1lUhgq5ZGV0_wklWao1_0jlFueFHQd-yD?usp=sharing) |
 
  
 ### Semi-supervised models
-| Dataset     | Top-1 accuracy | Top-5 accuracy | Percentage of labels | Download link |
-|-------------|----------------|----------------|----------------------|--------------|
-| ImageNet-1K | 56.1%          | 79.4%          | 1%                   |Coming soon    | 
-| ImageNet-1K | 69.9%          | 89.5%          | 10%                  |Coming soon    | 
+| Dataset     | Top-1 accuracy | Top-5 accuracy | Percentage of labels | Download link                                                                                    |
+|-------------|----------------|----------------|----------------------|--------------------------------------------------------------------------------------------------|
+| ImageNet-1K | 56.1%          | 79.4%          | 1%                   | [Download](https://drive.google.com/drive/folders/1BugB2eAw3taII3Ug2vPI-6jVnqfw58I6?usp=sharing) | 
+| ImageNet-1K | 69.9%          | 89.5%          | 10%                  | [Download](https://drive.google.com/drive/folders/1Y9s_iVVI_6o9vqNTW3v_gaDYOLbFjPyY?usp=sharing) | 
+
+
+### Transfer learning on VOC
+| Pretrain dataset | Finetune dataset | mAP  | Download link                                                                                    |
+|------------------|------------------|------|--------------------------------------------------------------------------------------------------|
+ | ImageNet-1k     | VOC2007          | 87.1 | [Download](https://drive.google.com/drive/folders/13dsE_rIu2_wJVddcdEPMHTsZIuhHQMHB?usp=sharing) |
 
 ### Distillation
-| Dataset     | Top-1 accuracy | Download link |
-|-------------|----------------|----------|
-| ImageNet-1K | 75.3%          |  Coming soon |
-| STL10 | 95.6%| Coming soon |
+| Dataset     | Top-1 accuracy | Download link                                                                                    |
+|-------------|----------------|--------------------------------------------------------------------------------------------------|
+| ImageNet-1K | 75.3%          | [Download](https://drive.google.com/drive/folders/1LYR_U683CT7xVP9__DjMIjR9lMaX8jhQ?usp=sharing)                                                                                     |
+| STL10 | 95.6%          | [Download](https://drive.google.com/drive/folders/1lCGvOZvoJ8CLNoPLPEoQAJ76sWZtCClB?usp=sharing) |
+ | CIFAR100 | 78.6%          | [Download](https://drive.google.com/drive/folders/1gBMqJ4dvVp2wiNnCo1Uzz5rXC9rqmq53?usp=sharing) | 
 
 ## Citation
 ```
