@@ -66,11 +66,12 @@ def evaluate_retrain(args):
                 h = encoder(x)
             h = h.detach()
             y_hat = finetuner(h)
+            acc = torchmetrics.functional.accuracy(y_hat, y)
             loss = F.cross_entropy(y_hat, y)
             opt.zero_grad()
             loss.backward()
             opt.step()
-            pbar.set_description(f'Epoch: {i}. Loss: {loss.item():.3f}')
+            pbar.set_description(f'Epoch: {i}. Loss: {loss.item():.3f}. Acc: {acc:.3f}')
         scheduler.step()
 
         finetuner.eval()
@@ -90,13 +91,15 @@ def evaluate_retrain(args):
 
             torch.save(finetuner.state_dict(), f'finetuner_{ds_name}_{size}.pth')
 
+        torch.save(finetuner.state_dict(), f'finetuner_epoch_{i}_{ds_name}_{size}.pth')
+
     print(f'Best epoch: {best_epoch}, Best acc: {best_acc}')
 
 
 def evaluate_finetuner(args):
     config = get_config(args.config)
     device = get_device()
-    ckpt = torch.load(args.ckpt, map_location=device)
+    ckpt = torch.load(args.ckpt, map_location='cpu')
 
     # load train dataset
     ds_name = config['dataset']['name']
@@ -110,11 +113,14 @@ def evaluate_finetuner(args):
     n_workers = config['n_workers']
     val_dl = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=n_workers)
 
-    encoder = ResnetMultiProj(**config['encoder']).eval()
+    encoder = ResnetMultiProj(**config['encoder']).cpu().eval()
     encoder.load_state_dict(ckpt['encoder'])
-    finetuner = nn.Linear(encoder.num_features, n_classes).to(device)
+    finetuner = nn.Linear(encoder.num_features, n_classes).to(device).eval()
     finetuner.load_state_dict(ckpt['online_finetuner'])
     encoder = encoder.backbone.to(device)
+
+    encoder.requires_grad_(False)
+    finetuner.requires_grad_(False)
 
     acc = torchmetrics.Accuracy().to(device)
     acc_top5 = torchmetrics.Accuracy(top_k=5).to(device)
