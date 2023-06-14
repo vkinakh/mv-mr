@@ -1,5 +1,5 @@
 batch_size: 256               # batch size for training
-epochs: 100                   # number of epochs to train for
+epochs: 200                   # number of epochs to train for
 warmup_epochs: 10             # number of warmup epochs (without learning rate decay)
 log_every: 100                # frequency of logging (steps)
 eval_every: 1                 # frequency of evaluating on val set (epochs)
