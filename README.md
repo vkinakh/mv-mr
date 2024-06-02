@@ -5,9 +5,9 @@
 # MV-MR: multi-views and multi-representations for self-supervised learning and knowledge distillation
 
 This repo contains official Pytorch implementations of the paper:
-**MV-MR: multi-views and multi-representations for self-supervised learning and knowledge distillation**
+**MV–MR: Multi-Views and Multi-Representations for Self-Supervised Learning and Knowledge Distillation**
 
-[Paper](https://arxiv.org/abs/2303.12130v1)
+[Paper](https://doi.org/10.3390/e26060466)
 
 
 # Contents
@@ -20,17 +20,16 @@ This repo contains official Pytorch implementations of the paper:
 
 ## Introduction
 
-We present a new method of self-supervised learning and knowledge distillation based on the multi-views and 
-multi-representations (MV-MR). The MV-MR is based on the maximization of dependence between learnable embeddings from 
-augmented and non-augmented views, jointly with the maximization of dependence between learnable embeddings from 
-augmented view and multiple non-learnable representations from non-augmented view. We show that the proposed method 
-can be used for efficient self-supervised classification and model-agnostic knowledge distillation. 
-Unlike other self-supervised techniques, our approach does not use any contrastive learning, clustering, 
-or stop gradients. MV-MR is a generic framework allowing the incorporation of constraints on the learnable embeddings 
-via the usage of image multi-representations as regularizers. Along this line, knowledge distillation is considered as 
-a particular case of such a regularization. MV-MR provides the state-of-the-art performance on the STL10, CIFAR20 and 
-ImageNet-1K datasets among non-contrastive and clustering-free methods. We show that a lower complexity ResNet50 model 
-pretrained using proposed knowledge distillation based on the CLIP ViT model achieves state-of-the-art performance on STL10 linear evaluation
+We present a new method of self-supervised learning and knowledge distillation based on multi-views and multi-representations (MV–MR). 
+MV–MR is based on the maximization of dependence between learnable embeddings from augmented and non-augmented views, 
+jointly with the maximization of dependence between learnable embeddings from the augmented view and multiple non-learnable 
+representations from the non-augmented view. We show that the proposed method can be used for efficient self-supervised 
+classification and model-agnostic knowledge distillation. Unlike other self-supervised techniques, our approach does not 
+use any contrastive learning, clustering, or stop gradients. MV–MR is a generic framework allowing the incorporation of 
+constraints on the learnable embeddings via the usage of image multi-representations as regularizers. The proposed method 
+is used for knowledge distillation. MV–MR provides state-of-the-art self-supervised performance on the STL10 and CIFAR20 
+datasets in a linear evaluation setup. We show that a low-complexity ResNet50 model pretrained using proposed knowledge 
+distillation based on the CLIP ViT model achieves state-of-the-art performance on STL10 and CIFAR100 datasets.
 
 ## Installation
 
@@ -181,10 +180,14 @@ See `scripts/` folder.
 
 ## Citation
 ```
-@article{kinakh2023mv,
-  title={MV-MR: multi-views and multi-representations for self-supervised learning and knowledge distillation},
+@article{kinakh2024mv,
+  title={MV--MR: Multi-Views and Multi-Representations for Self-Supervised Learning and Knowledge Distillation},
   author={Kinakh, Vitaliy and Drozdova, Mariia and Voloshynovskiy, Slava},
-  journal={arXiv preprint arXiv:2303.12130},
-  year={2023}
+  journal={Entropy},
+  volume={26},
+  number={6},
+  pages={466},
+  year={2024},
+  publisher={MDPI}
 }
 ```
